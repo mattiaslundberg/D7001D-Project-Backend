@@ -1,6 +1,16 @@
 #!/usr/bin/python
 
 import os
+import boto
+import boto.ec2
+import commands
+from boto.ec2.elb import HealthCheck
+from boto.ec2.autoscale import LaunchConfiguration
+from boto.ec2.autoscale import AutoScalingGroup
+from boto.ec2.autoscale import AutoScaleConnection, ScalingPolicy
+from boto.ec2.cloudwatch import MetricAlarm
+from boto.ec2.autoscale.tag import Tag
+import boto.ec2.cloudwatch
 
 user = os.environ['LTU_USER']
 ami = 'ami-05131271'
