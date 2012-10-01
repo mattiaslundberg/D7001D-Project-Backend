@@ -25,11 +25,10 @@ WSN_ASG = '12_LP1_WSNASG_D7001D_%s' % user
 WSN_LC = '12_LP1_WSNLC_D7001D_%s' % user
 WSN_AMI ='ami-05131271' # TODO change
 
+#### GUI NAMES ####
 GUI_AMI_MASTER = ''
 FRONTEND_INCOMING = '12_LP1_SQS_D7001D_frontend_incoming'
-
-#### GUI NAMES ####
-# TODO
+FRONTEND_OUTGOING = '12_LP1_SQS_D7001D_frontend_outgoing'
 
 class Connector():
 	def __init__(self):
@@ -81,7 +80,12 @@ class Connector():
 	
 	def stop_gui(self):
 		try:
-			self.awssqs.deleteQueue()
+			self.qout.deleteQueue()
+		except Exception, e:
+			print e
+
+		try:
+			self.qin.deleteQueue()
 		except Exception, e:
 			print e
 	
@@ -186,9 +190,10 @@ class Connector():
 	
 	def start_gui_interface(self):
 		from AWSSQS import AWSSQS
-		self.awssqs = AWSSQS(FRONTEND_INCOMING, create = True)
+		self.qin = AWSSQS(FRONTEND_INCOMING, create = True)
+		self.qout = AWSSQS(FRONTEND_OUTGOING, create = True)
+
 		self.launch_instances(1, ami = GUI_AMI_MASTER, extra_tags = {'Frontend' : 'True', 'Master' : 'True'})
-		#self.launch_instances(1, ami = GUI_AMI_WORKER, extra_tags = {'Frontend' : 'True', 'Worker' : 'True'})
 
 
 if __name__ == '__main__':
