@@ -16,7 +16,7 @@ user = os.environ['LTU_USER']
 
 
 #### WSN NAMES ####
-WSN_ELB = 'wsnelb_group_2'
+WSN_ELB = 'wsnelbgroup2'
 WSN_SCALE_UP = '12_LP1_WSNUP_D7001D_%s' % user
 WSN_SCALE_DOWN = '12_LP1_WSNDWN_D7001D_%s' % user
 WSN_POLICY_UP = '12_LP1_WSNUPPOL_D7001D_%s' % user
@@ -114,7 +114,7 @@ class Connector():
 	
 	def start_wsn_interface(self):
 		# Launch a ELB with autoscaling
-		ports = [(8080, 8080, 'http')]
+		ports = [(12345, 12345, 'tcp')]
 		self.lb = self.elbconn.create_load_balancer(WSN_ELB, ['eu-west-1a'], ports)
 		
 		# DEF Helathcheck
@@ -122,13 +122,13 @@ class Connector():
 			interval=20,
 			healthy_threshold=3,
 			unhealthy_threshold=5,
-			target='HTTP:8080/'
+			target='HTTP:80/'
 		)
 		
 		self.lb.configure_health_check(hc)
 		
 		# Settings for launched instances
-		self.lc = LaunchConfiguration(name=WSN_LC, image_id=ami,
+		self.lc = LaunchConfiguration(name=WSN_LC, image_id=WSN_AMI,
 				key_name='12_LP1_KEY_D7001D_%s' % user,
 				instance_type='t1.micro',
 				security_groups=['12_LP1_SEC_D7001D_%s' % user])
@@ -157,12 +157,12 @@ class Connector():
 				name=WSN_POLICY_DOWN, adjustment_type='ChangeInCapacity',
 				as_name=WSN_ASG, scaling_adjustment=-1, cooldown=30)
 		
-		self.scaler.create_scaling_policy(scale_up_policy)
-		self.scaler.create_scaling_policy(scale_down_policy)
+		self.sconn.create_scaling_policy(scale_up_policy)
+		self.sconn.create_scaling_policy(scale_down_policy)
 		
-		scale_up_policy = self.scaler.get_all_policies(
+		scale_up_policy = self.sconn.get_all_policies(
 			as_group=WSN_ASG, policy_names=[WSN_POLICY_UP])[0]
-		scale_down_policy = self.scaler.get_all_policies(
+		scale_down_policy = self.sconn.get_all_policies(
 			as_group=WSN_ASG, policy_names=[WSN_POLICY_DOWN])[0]
 		
 		# When to scale
@@ -179,13 +179,13 @@ class Connector():
 		scale_up_alarm.enable_actions()
 		
 		scale_down_alarm = MetricAlarm(
-			name=WSN_SCALE_DOWN namespace='AWS/EC2',
+			name=WSN_SCALE_DOWN, namespace='AWS/EC2',
 			metric='CPUUtilization', statistic='Average',
 			comparison='<', threshold='40',
 			period='60', evaluation_periods=2,
 			alarm_actions=[scale_down_policy.policy_arn],
 			dimensions=alarm_dimensions)
-		self.cloudwatch.create_alarm(scale_down_alarm)
+		self.cwconn.create_alarm(scale_down_alarm)
 		scale_down_alarm.enable_actions()
 	
 	def start_gui_interface(self):
