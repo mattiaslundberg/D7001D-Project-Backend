@@ -50,3 +50,4 @@ class AWSSQS:
 	def deleteQueue(self):
 		self.conn.delete_queue(self.q)
 		self.q = None
+		self.conn.close()

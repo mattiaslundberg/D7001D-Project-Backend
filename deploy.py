@@ -12,6 +12,8 @@ from boto.ec2.cloudwatch import MetricAlarm
 from boto.ec2.autoscale.tag import Tag
 import boto.ec2.cloudwatch
 
+from AWSSQS import AWSSQS, deleteQueue
+
 user = os.environ['LTU_USER']
 
 
@@ -26,9 +28,9 @@ WSN_LC = '12_LP1_WSNLC_D7001D_%s' % user
 WSN_AMI ='ami-05131271' # TODO change
 
 #### GUI NAMES ####
-GUI_AMI_MASTER = ''
-FRONTEND_INCOMING = '12_LP1_SQS_D7001D_frontend_incoming'
-FRONTEND_OUTGOING = '12_LP1_SQS_D7001D_frontend_outgoing'
+GUI_AMI_MASTER = '' # TODO change
+FRONTEND_INCOMING = '12_LP1_SQS_D7001D_FRONTEND_INCOMING_%s' % user
+FRONTEND_OUTGOING = '12_LP1_SQS_D7001D_FRONTEND_OUTGOING_%s' % user
 
 class Connector():
 	def __init__(self):
@@ -93,6 +95,8 @@ class Connector():
 		self.stop_instances()
 		self.stop_wsn()
 		self.stop_gui()
+
+		self.conn.close()
 	
 	def stop_instances(self):
 		# Stop all of my running instances and mark for deletion
@@ -189,7 +193,6 @@ class Connector():
 		scale_down_alarm.enable_actions()
 	
 	def start_gui_interface(self):
-		from AWSSQS import AWSSQS
 		self.qin = AWSSQS(FRONTEND_INCOMING, create = True)
 		self.qout = AWSSQS(FRONTEND_OUTGOING, create = True)
 
