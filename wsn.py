@@ -29,6 +29,7 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		self.timestamp = self.request.recv(64, socket.MSG_WAITALL)
 		self.size = self.request.recv(32, socket.MSG_WAITALL)
 		self.data = self.request.recv(int(self.size), socket.MSG_WAITALL)
+		"""
 		print "recived data"
 		print "cell %d" % int(self.cell)
 		print "node %d" % int(self.node)
@@ -36,9 +37,9 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		print "timestamp %d" % int(self.timestamp)
 		print "size %d" % int(self.size)
 		print "data %s" % self.data
-		
-		self.cartype = commands.getoutput("echo 1")
-		self.db.save_packet(int(self.cell), int(self.node), int(self.side), int(self.timestamp), self.cartype)
+		"""
+		self.cartype = commands.getoutput("echo 1") # TODO run the real command command
+		self.db.save_packet(int(self.cell), int(self.node), int(self.side), int(self.timestamp), int(self.cartype), self.data)
  
 class ThreadingServer(ThreadingMixIn, SocketServer.TCPServer):
 	pass

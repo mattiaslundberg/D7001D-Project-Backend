@@ -12,7 +12,6 @@ Side (flags)	8	zero equals right side and one equals left side
 Timestamp		64	UTC timestamp in ms
 Size			32	tells amount of bytes of rawdata
 Rawdata			xx
-
 """
 
 if __name__ == '__main__':
