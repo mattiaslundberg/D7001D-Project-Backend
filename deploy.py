@@ -108,7 +108,7 @@ class Connector():
 	
 	def start_wsn_interface(self):
 		# Launch a ELB with autoscaling
-		ports = [(8080, 8080, 'http')]
+		ports = [(12345, 12345, 'tcp')]
 		self.lb = self.elbconn.create_load_balancer(WSN_ELB, ['eu-west-1a'], ports)
 		
 		# DEF Helathcheck
@@ -116,7 +116,7 @@ class Connector():
 			interval=20,
 			healthy_threshold=3,
 			unhealthy_threshold=5,
-			target='HTTP:8080/'
+			target='HTTP:80/'
 		)
 		
 		self.lb.configure_health_check(hc)

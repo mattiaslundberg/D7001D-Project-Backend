@@ -10,30 +10,29 @@ class db:
 		self.conn = boto.dynamodb.connect_to_region('eu-west-1')
 		if not '12_LP1_DDB_D7001D_%s' % user in self.conn.list_tables():
 			self.create_db()
-		time.sleep(5)
+			time.sleep(5)
 		self.table = self.conn.get_table('12_LP1_DDB_D7001D_%s' % user)
 	
 	def load_packets(self, cell, node, side, cartype, start=0, end=4294967296):
 		items = self.table.query(
-			hash_key=cell,
+			hash_key=(cell << 32) + node,
 			range_key_condition = BETWEEN(start, end),
 		)
 		ret = []
 		for item in items:
-			if cell == item['cell_id'] and side == item['side'] and cartype == item['cartype']:
+			if side == item['side'] and cartype == item['cartype']:
 				ret.append(item['data'])
 		return ret
 	
 	def save_packet(self, cell, node, side, timestamp, cartype, data):
 		attr = {
 			'cartype':cartype,
-			'node':node,
 			'side':side,
 			'data':data,
 		}
 		
 		item = self.table.new_item(
-			hash_key=cell,
+			hash_key=(cell << 32) + node,
 			range_key=timestamp,
 			attrs=attr
 		)

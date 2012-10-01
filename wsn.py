@@ -1,4 +1,7 @@
+#!/usr/bin/python
+
 import SocketServer
+import commands
 import socket
 from SocketServer import ThreadingMixIn
 from dynamo import db as _db
@@ -15,11 +18,9 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 	Timestamp		64	UTC timestamp in ms
 	Size			32	tells amount of bytes of rawdata
 	Rawdata			xx
-	
 	"""
 	
-	def __init__(self):
-		self.db = _db()
+	db = _db()
 	
 	def handle(self):
 		# self.request is the TCP socket connected to the client
@@ -29,7 +30,9 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		self.timestamp = self.request.recv(64, socket.MSG_WAITALL)
 		self.size = self.request.recv(32, socket.MSG_WAITALL)
 		self.data = self.request.recv(int(self.size), socket.MSG_WAITALL)
+		
 		"""
+		# DEBUG
 		print "recived data"
 		print "cell %d" % int(self.cell)
 		print "node %d" % int(self.node)
@@ -38,7 +41,13 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		print "size %d" % int(self.size)
 		print "data %s" % self.data
 		"""
-		self.cartype = commands.getoutput("echo 1") # TODO run the real command command
+		
+		file_name = '/tmp/demofile'
+		f = open(file_name, 'w')
+		f.write(self.data)
+		f.close()
+		
+		self.cartype = commands.getoutput("./test_in/process -f type -n 1 %s" % file_name)
 		self.db.save_packet(int(self.cell), int(self.node), int(self.side), int(self.timestamp), int(self.cartype), self.data)
  
 class ThreadingServer(ThreadingMixIn, SocketServer.TCPServer):
