@@ -13,7 +13,7 @@ from boto.ec2.autoscale.tag import Tag
 import boto.ec2.cloudwatch
 
 user = os.environ['LTU_USER']
-ami = 'ami-05131271'
+
 
 #### WSN NAMES ####
 WSN_ELB = 'wsnelb_group_2'
@@ -23,6 +23,10 @@ WSN_POLICY_UP = '12_LP1_WSNUPPOL_D7001D_%s' % user
 WSN_POLICY_DOWN = '12_LP1_WSNDWNPOL_D7001D_%s' % user
 WSN_ASG = '12_LP1_WSNASG_D7001D_%s' % user
 WSN_LC = '12_LP1_WSNLC_D7001D_%s' % user
+WSN_AMI ='ami-05131271' # TODO change
+
+GUI_AMI_MASTER = ''
+FRONTEND_INCOMING = '12_LP1_SQS_D7001D_frontend_incoming'
 
 #### GUI NAMES ####
 # TODO
@@ -38,7 +42,7 @@ class Connector():
 		self.cwconn = boto.connect_cloudwatch(region=boto.ec2.cloudwatch.regions()[2])
 		self.sconn = AutoScaleConnection(region=boto.ec2.autoscale.regions()[2])
 	
-	def launch_instances(self,num=1):
+	def launch_instances(self, ami, num=1, extra_tags = {}):
 		# Launch one or more EC2 instances from AMI
 		self.res = self.conn.run_instances(
 			ami,
@@ -53,6 +57,8 @@ class Connector():
 			inst.add_tag('Name', '12_LP1_EC2_D7001D_%s' % user)
 			inst.add_tag('user', user)
 			inst.add_tag('course', 'D7001D')
+			for key, value in extra_tags.items():
+				inst.add_tag(key, value)
 	
 	def stop_wsn(self):
 		## Delete all things created
@@ -74,7 +80,10 @@ class Connector():
 			print e
 	
 	def stop_gui(self):
-		pass
+		try:
+			self.awssqs.deleteQueue()
+		except Exception, e:
+			print e
 	
 	def stop_all(self):
 		self.stop_instances()
@@ -176,7 +185,11 @@ class Connector():
 		scale_down_alarm.enable_actions()
 	
 	def start_gui_interface(self):
-		pass
+		from AWSSQS import AWSSQS
+		self.awssqs = AWSSQS(FRONTEND_INCOMING, create = True)
+		self.launch_instances(1, ami = GUI_AMI_MASTER, extra_tags = {'Frontend' : 'True', 'Master' : 'True'})
+		#self.launch_instances(1, ami = GUI_AMI_WORKER, extra_tags = {'Frontend' : 'True', 'Worker' : 'True'})
+
 
 if __name__ == '__main__':
 	c = Connector()
