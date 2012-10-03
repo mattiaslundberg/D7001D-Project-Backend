@@ -29,6 +29,9 @@ ip_checked = False
 results = "/tmp/results/"
 FRONTEND_ELB = 'FRONTENDelbgroup2'
 
+conn = None
+dns = None
+
 ''' using elb -- getdns() function
 def public_ip():
 	try:
@@ -56,8 +59,7 @@ def handleRequest(xmltext):
 	logger.info("TODO: Handle request")
 	return (1, xmltext)
 
-conn = None
-dns = None
+
 
 def getdns():
 	try:			
@@ -115,7 +117,7 @@ while True:
 				for i in r.instances:
 					i.add_tag('Name', 'delete-me_%s' % user)
 					i.add_tag('action', 'delete')
-					i.terminate()
+					i.stop()
 
 			conn.close()
 			time.sleep(600) # Just do nothing until system is shutdown

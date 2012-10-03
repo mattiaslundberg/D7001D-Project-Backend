@@ -1,6 +1,7 @@
 from boto.sqs.connection import SQSConnection
 from boto.sqs.message import Message
 import boto.sqs # Needed for boto.sqs.regions()
+import time
 
 class AWSSQS:
 	def __init__(self, name, create = False):
@@ -22,6 +23,7 @@ class AWSSQS:
 		success = self.q.write(m)
 		failed = 0
 		while not success:
+			time.sleep(5)
 			success = q.write(m) # Keep trying until success
 			failed +=1
 			if failed > 10:
