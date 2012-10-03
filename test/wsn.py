@@ -17,11 +17,11 @@ Rawdata			xx
 """
 
 if __name__ == '__main__':
-	max_tests = 10
+	max_tests = 100
 	for f in commands.getoutput("ls ../pkt").split('\n'):
 		s = socket.socket(
 			socket.AF_INET, socket.SOCK_STREAM)
-		s.connect(('localhost', 12345))
+		s.connect(('wsnelbgroup2-598280784.eu-west-1.elb.amazonaws.com', 12345))
 		s.send('%32d' % 2)
 		s.send('%32d' % 2)
 		s.send('%8d' % 1)
