@@ -4,7 +4,8 @@ import boto.sqs # Needed for boto.sqs.regions()
 import time
 
 class AWSSQS:
-	def __init__(self, name, create = False):
+	def __init__(self, name, create = False, visibility_timeout = 60):
+		self.visibility_timeout = visibility_timeout
 		self.conn = SQSConnection(region=boto.sqs.regions()[1]) # eu-west1
 		if create:
 			self.q = self.conn.create_queue(name)
@@ -33,7 +34,7 @@ class AWSSQS:
 	def read(self):
 		if self.q is None:
 			raise Exception("Queue is none " + self.name)
-		rs = self.q.get_messages(visibility_timeout = 60)
+		rs = self.q.get_messages(visibility_timeout = self.visibility_timeout)
 		if len(rs) > 0:
 			m = rs[0]
 			return m
@@ -42,7 +43,7 @@ class AWSSQS:
 	def length(self):
 		if self.q is None:
 			raise Exception("Queue is none " + self.name)
-		rs = self.q.get_messages(visibility_timeout = 60)
+		rs = self.q.get_messages(visibility_timeout = self.visibility_timeout)
 		return len(rs)
 
 

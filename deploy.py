@@ -41,6 +41,10 @@ GUI_AMI_MASTER = 'ami-e7b5b493' # TODO change
 FRONTEND_INCOMING = '12_LP1_SQS_D7001D_FRONTEND_INCOMING_%s' % user
 FRONTEND_OUTGOING = '12_LP1_SQS_D7001D_FRONTEND_OUTGOING_%s' % user
 
+MASTER_TOKEN = "12_LP1_SQS_D7001D_FRONTEND_MASTER_%s" % user
+INTERVALL = 60
+TOKEN_TIME = INTERVALL*4
+
 class Connector():
 	def __init__(self):
 		self.connect()
@@ -97,6 +101,10 @@ class Connector():
 
 		try:
 			self.qin.deleteQueue()
+		except Exception, e:
+			print e
+		try:
+			self.qtoken.deleteQueue()
 		except Exception, e:
 			print e
 
@@ -223,8 +231,10 @@ class Connector():
 		# SQS
 		self.qin = AWSSQS(FRONTEND_INCOMING, create = True)
 		self.qout = AWSSQS(FRONTEND_OUTGOING, create = True)
+		self.qtoken = AWSSQS(MASTER_TOKEN, create = True, visibility_timeout = TOKEN_TIME)
+		self.qtoken.write("token")
 
-		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'True', 'Master' : 'True'})
+		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'})
 
 		# ELB with autoscale
 		ports = [(80, 80, 'http')]

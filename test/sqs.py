@@ -17,6 +17,7 @@ try:
 	text = m.get_body()
 
 	assert text == msg, "What we put in queue is not the same as came out!"
+	assert q.read() == None, "Read should be locked!"
 
 	q.delete(m)
 
