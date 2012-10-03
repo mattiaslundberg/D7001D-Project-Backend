@@ -24,6 +24,8 @@ class db:
 	
 	def save_packet(self, cell, node, side, timestamp, cartype, data):
 		attr = {
+			'cartype':cartype,
+			'side':side,
 			'data':data,
 		}
 		
