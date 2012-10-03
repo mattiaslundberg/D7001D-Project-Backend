@@ -39,7 +39,6 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		print "side %d" % int(self.side)
 		print "timestamp %d" % int(self.timestamp)
 		print "size %d" % int(self.size)
-		print "data %s" % self.data
 		"""
 		
 		file_name = '/tmp/demofile'
