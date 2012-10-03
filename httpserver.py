@@ -2,6 +2,7 @@
 
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from SocketServer import ThreadingMixIn
+from calculated_db import db as _db
 import logging
 import threading
 import commands
@@ -17,6 +18,8 @@ run_port = 8080
 
 class Handler(BaseHTTPRequestHandler):
 	""" Handle HTTP requests """
+	def __init__(self):
+		self.db = None
 	
 	def do_GET(self):
 		""" Handle GET requests """
@@ -32,11 +35,19 @@ class Handler(BaseHTTPRequestHandler):
 			qs = urlparse.parse_qs(tmp)
 			if qs.has_key('requestid'):
 				requestid = qs['requestid'][0]
-				# TODO pick from database
-				self.wfile.write(requestid)
+				data = self._getdbdata(requestid)
+				if data is None:
+					self.wfile.write("That result do not exist in database")
+				else:
+					self.wfile.write(data)
 				return
 
 		self.wfile.write('You did not write GET /?requestid=123')
+
+	def _getdbdata(requestid):
+		if self.db is None:
+			self.db = _db()
+		return self.db.load_packets(requestid)
 		
 	def do_POST(self):
 		""" Handle post requests """
