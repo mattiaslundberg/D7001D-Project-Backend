@@ -28,6 +28,14 @@ WSN_LC = '12_LP1_WSNLC_D7001D_%s' % user
 WSN_AMI ='ami-e7b5b493' # TODO change
 
 #### GUI NAMES ####
+FRONTEND_ELB = 'FRONTENDelbgroup2'
+FRONTEND_SCALE_UP = '12_LP1_FRONTENDUP_D7001D_%s' % user
+FRONTEND_SCALE_DOWN = '12_LP1_FRONTENDDWN_D7001D_%s' % user
+FRONTEND_POLICY_UP = '12_LP1_FRONTENDUPPOL_D7001D_%s' % user
+FRONTEND_POLICY_DOWN = '12_LP1_FRONTENDDWNPOL_D7001D_%s' % user
+FRONTEND_ASG = '12_LP1_FRONTENDASG_D7001D_%s' % user
+FRONTEND_LC = '12_LP1_FRONTENDLC_D7001D_%s' % user
+
 GUI_AMI_MASTER = 'ami-e7b5b493' # TODO change
 FRONTEND_INCOMING = '12_LP1_SQS_D7001D_FRONTEND_INCOMING_%s' % user
 FRONTEND_OUTGOING = '12_LP1_SQS_D7001D_FRONTEND_OUTGOING_%s' % user
@@ -90,6 +98,24 @@ class Connector():
 			self.qin.deleteQueue()
 		except Exception, e:
 			print e
+
+		# ELB and autoscale
+		try:
+			self.elbconn.delete_load_balancer(FRONTEND_ELB)
+		except Exception, e:
+			print e
+		try:
+			self.sconn.delete_auto_scaling_group(FRONTEND_ASG, force_delete=True)
+		except Exception, e:
+			print e
+		try:
+			self.sconn.delete_launch_configuration(FRONTEND_LC)
+		except Exception, e:
+			print e
+		try:
+			self.cwconn.delete_alarms([FRONTEND_SCALE_DOWN, FRONTEND_SCALE_UP])
+		except Exception, e:
+			print e
 	
 	def stop_all(self):
 		self.stop_instances()
@@ -121,7 +147,7 @@ class Connector():
 		ports = [(12345, 12345, 'tcp')]
 		self.lb = self.elbconn.create_load_balancer(WSN_ELB, ['eu-west-1a'], ports)
 		
-		# DEF Helathcheck
+		# DEF Healthcheck
 		hc = HealthCheck(
 			interval=20,
 			healthy_threshold=3,
@@ -193,10 +219,88 @@ class Connector():
 		scale_down_alarm.enable_actions()
 	
 	def start_gui_interface(self):
+		# SQS
 		self.qin = AWSSQS(FRONTEND_INCOMING, create = True)
 		self.qout = AWSSQS(FRONTEND_OUTGOING, create = True)
 
 		self.launch_instances(1, ami = GUI_AMI_MASTER, extra_tags = {'Frontend' : 'True', 'Master' : 'True'})
+
+		# ELB with autoscale
+		ports = [(80, 80, 'http')]
+		self.lb = self.elbconn.create_load_balancer(FRONTEND_ELB, ['eu-west-1a'], ports)
+		
+		# DEF Healthcheck
+		hc = HealthCheck(
+			interval=20,
+			healthy_threshold=3,
+			unhealthy_threshold=5,
+			target='HTTP:80/'
+		)
+		
+		self.lb.configure_health_check(hc)
+		
+		# Settings for launched instances
+		self.lc = LaunchConfiguration(name=FRONTEND_LC, image_id=FRONTEND_AMI,
+				key_name='12_LP1_KEY_D7001D_%s' % user,
+				instance_type='t1.micro',
+				security_groups=['12_LP1_SEC_D7001D_%s' % user])
+		self.sconn.create_launch_configuration(self.lc)
+		
+		## Scale group
+		self.ag = AutoScalingGroup(group_name=FRONTEND_ASG, load_balancers=[FRONTEND_ELB],
+				availability_zones=['eu-west-1a'],
+				launch_config=self.lc, min_size=2, max_size=8)
+		self.sconn.create_auto_scaling_group(self.ag)
+		
+		# Tag instances
+		ntag = Tag(key='Name', value='12_LP1_EC2_D7001D_%s' % user, resource_id=FRONTEND_ASG,
+			propagate_at_launch=True)
+		ctag = Tag(key='course', value='D7001D', resource_id=FRONTEND_ASG,
+			propagate_at_launch=True)
+		utag = Tag(key='user', value=user, resource_id=FRONTEND_ASG,
+			propagate_at_launch=True)
+		ftag = Tag(key='FRONTEND', value="HTTP_WORKER", resource_id=FRONTEND_ASG,
+			propagate_at_launch=True)
+		self.sconn.create_or_update_tags([ntag,ctag,utag,ftag])
+		
+		# How to scale
+		scale_up_policy = ScalingPolicy(
+				name=FRONTEND_POLICY_UP, adjustment_type='ChangeInCapacity',
+				as_name=FRONTEND_ASG, scaling_adjustment=1, cooldown=30)
+		scale_down_policy = ScalingPolicy(
+				name=FRONTEND_POLICY_DOWN, adjustment_type='ChangeInCapacity',
+				as_name=FRONTEND_ASG, scaling_adjustment=-1, cooldown=30)
+		
+		self.sconn.create_scaling_policy(scale_up_policy)
+		self.sconn.create_scaling_policy(scale_down_policy)
+		
+		scale_up_policy = self.sconn.get_all_policies(
+			as_group=FRONTEND_ASG, policy_names=[FRONTEND_POLICY_UP])[0]
+		scale_down_policy = self.sconn.get_all_policies(
+			as_group=FRONTEND_ASG, policy_names=[FRONTEND_POLICY_DOWN])[0]
+		
+		# When to scale
+		alarm_dimensions = {"AutoScalingGroupName": FRONTEND_ASG}
+		
+		scale_up_alarm = MetricAlarm(
+			name=FRONTEND_SCALE_UP, namespace='AWS/EC2',
+			metric='CPUUtilization', statistic='Average',
+			comparison='>', threshold='60',
+			period='60', evaluation_periods=2,
+			alarm_actions=[scale_up_policy.policy_arn],
+			dimensions=alarm_dimensions)
+		self.cwconn.create_alarm(scale_up_alarm)
+		scale_up_alarm.enable_actions()
+		
+		scale_down_alarm = MetricAlarm(
+			name=FRONTEND_SCALE_DOWN, namespace='AWS/EC2',
+			metric='CPUUtilization', statistic='Average',
+			comparison='<', threshold='40',
+			period='60', evaluation_periods=2,
+			alarm_actions=[scale_down_policy.policy_arn],
+			dimensions=alarm_dimensions)
+		self.cwconn.create_alarm(scale_down_alarm)
+		scale_down_alarm.enable_actions()
 
 
 if __name__ == '__main__':
