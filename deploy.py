@@ -3,6 +3,7 @@
 import os
 import boto
 import boto.ec2
+import time
 import commands
 from boto.ec2.elb import HealthCheck
 from boto.ec2.autoscale import LaunchConfiguration
@@ -144,7 +145,7 @@ class Connector():
 	
 	def print_ip(self):
 		# Print IP:s I might need
-		for e in self.elbconn.get_all_load_balancers(filters={'tag-value':user}):
+		for e in self.elbconn.get_all_load_balancers():
 			print 'ELB: %s' % e.dns_name
 		for r in self.conn.get_all_instances(filters={'tag-value':user}):
 			for i in r.instances:
@@ -161,7 +162,7 @@ class Connector():
 			interval=20,
 			healthy_threshold=3,
 			unhealthy_threshold=5,
-			target='HTTP:80/'
+			target='TCP:12345'
 		)
 		
 		self.lb.configure_health_check(hc)
