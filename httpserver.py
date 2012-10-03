@@ -47,7 +47,7 @@ class Handler(BaseHTTPRequestHandler):
 	def _getdbdata(requestid):
 		if self.db is None:
 			self.db = _db()
-		return self.db.load_packets(requestid)
+		return self.db.read(requestid)
 		
 	def do_POST(self):
 		""" Handle post requests """

@@ -12,14 +12,14 @@ class db:
 			self.create_db()
 		self.table = self.conn.get_table('12_LP1_CALC_D7001D_%s' % user)
 	
-	def load_packets(self, _id):
+	def read(self, _id):
 		item = self.table.query(hash_key=_id)
 		
 		for i in item:
 			return item['data']
 		return None
 	
-	def save_packet(self, _id, data):
+	def write(self, _id, data):
 		attr = {
 			'data':data,
 		}

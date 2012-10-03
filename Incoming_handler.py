@@ -1,8 +1,11 @@
 #!/usr/bin/python
 
 from AWSSQS import AWSSQS
+from calculated_db import db as _db
 import os, time, socket
 import urllib2
+import boto.ec2
+
 
 user = os.environ['LTU_USER']
 
@@ -24,7 +27,9 @@ INSTANCE_ID_URL = "http://169.254.169.254/latest/meta-data/instance-id"
 public_ip = ""
 ip_checked = False
 results = "/tmp/results/"
+FRONTEND_ELB = 'FRONTENDelbgroup2'
 
+''' using elb -- getdns() function
 def public_ip():
 	try:
 		if public_ip:
@@ -44,11 +49,33 @@ def public_ip():
 	except Exception, e:
 		pass
 	return public_ip
+'''
 
 def handleRequest(xmltext):
 	print "TODO: Handle request", xmltext
 	logger.info("TODO: Handle request")
 	return (1, xmltext)
+
+conn = None
+dns = None
+
+def getdns():
+	try:			
+		if conn is None:
+			conn = boto.ec2.connect_to_region('eu-west-1')
+		if dns is not None:
+			return dns
+		for e in conn.get_all_load_balancers(load_balancer_names=FRONTEND_ELB):
+			dns = e.dns_name
+			return dns
+	except Exception, e:
+		logger.error('Exception %s' % e)
+		return "" # Should never happen...
+
+try:
+	db = _db()
+except:
+	pass
 
 if not os.path.exists(results):
 	os.makedirs(results)
@@ -76,12 +103,11 @@ while True:
 		xmltext = m.get_body()
 		if xmltext == "STOPINSTANCE": # Special case
 			qIncoming.delete(m)
-			time.sleep(PRE_SLEEP_SHUTDOWN_TIME)
+			#time.sleep(PRE_SLEEP_SHUTDOWN_TIME)
 			
 			f = urllib2.urlopen(INSTANCE_ID_URL)
 			instance_id = f.read()
 
-			import boto.ec2
 			conn = boto.ec2.connect_to_region('eu-west-1')
 
 			# Stop this instance
@@ -96,18 +122,25 @@ while True:
 
 
 		logger.info("Got message %s" % xmltext)	
-		requestID, result = handleRequest(xmltext)		
+		requestID, result = handleRequest(xmltext)	
+
+		if not db:
+			db = _db()
+
+		db.write(requestID, result)
 		
+		''' old style
 		f = open(results+requestID+".xml","a+b")
 		f.write(result)
 		f.close()
+		'''
 
-		logger.info("Result written to %s" % xmltext)
+		logger.info("Result written %s" % xmltext)
 
 		if not qOutgoing:
 			qOutgoing = AWSSQS(FRONTEND_INCOMING)
 
-		qOutgoing.write("http://%s/%s" % (public_ip(), requestID+".xml"))
+		qOutgoing.write("http://%s:8080/?requestid=%s" % (getdns(), requestID+".xml"))
 
 		qIncoming.delete(m)
 	except Exception, e:
