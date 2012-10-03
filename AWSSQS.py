@@ -48,6 +48,6 @@ class AWSSQS:
 		self.q.delete_message(m)
 
 	def deleteQueue(self):
-		self.conn.delete_queue(self.q)
+		self.conn.delete_queue(self.q, force_deletion = True)
 		self.q = None
 		self.conn.close()

@@ -12,7 +12,7 @@ from boto.ec2.cloudwatch import MetricAlarm
 from boto.ec2.autoscale.tag import Tag
 import boto.ec2.cloudwatch
 
-from AWSSQS import AWSSQS, deleteQueue
+from AWSSQS import AWSSQS
 
 user = os.environ['LTU_USER']
 
@@ -25,10 +25,10 @@ WSN_POLICY_UP = '12_LP1_WSNUPPOL_D7001D_%s' % user
 WSN_POLICY_DOWN = '12_LP1_WSNDWNPOL_D7001D_%s' % user
 WSN_ASG = '12_LP1_WSNASG_D7001D_%s' % user
 WSN_LC = '12_LP1_WSNLC_D7001D_%s' % user
-WSN_AMI ='ami-05131271' # TODO change
+WSN_AMI ='ami-e7b5b493' # TODO change
 
 #### GUI NAMES ####
-GUI_AMI_MASTER = '' # TODO change
+GUI_AMI_MASTER = 'ami-e7b5b493' # TODO change
 FRONTEND_INCOMING = '12_LP1_SQS_D7001D_FRONTEND_INCOMING_%s' % user
 FRONTEND_OUTGOING = '12_LP1_SQS_D7001D_FRONTEND_OUTGOING_%s' % user
 

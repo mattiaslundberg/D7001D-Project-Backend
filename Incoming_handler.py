@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from AWSSQS import AWSSQS, write, read, delete
+from AWSSQS import AWSSQS
 import os, time, socket
 import urllib2
 
@@ -26,20 +26,23 @@ ip_checked = False
 results = "/tmp/results/"
 
 def public_ip():
-	if public_ip:
-		if ip_checked:
-			return public_ip
-		try:
-	    	socket.inet_aton(public_ip)
-	    	ip_checked = True
-			# legal ipv4 address
-			return public_ip
-		except socket.error:
-			# Not legal
-			pass		
+	try:
+		if public_ip:
+			if ip_checked:
+				return public_ip
+			try:
+		    	socket.inet_aton(public_ip)
+		    	ip_checked = True
+				# legal ipv4 address
+				return public_ip
+			except socket.error:
+				# Not legal
+				pass		
 
-	f = urllib2.urlopen(AMAZON_META_DATA_URL)
-	public_ip = f.read()
+		f = urllib2.urlopen(AMAZON_META_DATA_URL)
+		public_ip = f.read()
+	except Exception, e:
+		pass
 	return public_ip
 
 def handleRequest(xmltext):
@@ -68,6 +71,7 @@ while True:
 		if m is None:
 			# No job for me!
 			time.sleep(INTERVALL)
+			continue
 
 		xmltext = m.get_body()
 		if xmltext == "STOPINSTANCE": # Special case

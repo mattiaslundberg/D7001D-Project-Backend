@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import os, time
 import logger
-from AWSSQS import AWSSQS, length, write
+from AWSSQS import AWSSQS
 
 GUI_AMI_WORKER = ''
 SQS_LIMIT_LOW = 2
@@ -40,14 +40,15 @@ while True:
 	try:
 		awssqs = AWSSQS(FRONTEND_INCOMING, create = False)
 		length = awssqs.length()
-		if length > NUM_INSTANCES * SQS_LIMIT_HIGH:
+		if length >= NUM_INSTANCES * SQS_LIMIT_HIGH:
 			# Launch instances
 			logger.info("Creating instances")
-			launch_instances(1, ami = GUI_AMI_WORKER, extra_tags = {'Frontend' : 'True', 'Worker' : 'True'})
+			launch_instances(1, ami = GUI_AMI_WORKER, extra_tags = {'Frontend' : 'Worker'})
 			logger.info("Instance launched")
 			
 			NUM_INSTANCES += 1
 		elif length < NUM_INSTANCES * SQS_LIMIT_LOW:
+			logger.info("Decreasing instances")
 
 			# Remove instances by sending a message
 			awssqs.write("STOPINSTANCE")
@@ -59,13 +60,3 @@ while True:
 		logger.error('Exception %s' % e)
 	
 	time.sleep(INTERVALL)
-
-
-
-
-
-
-
-
-
-
