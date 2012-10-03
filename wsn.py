@@ -3,6 +3,7 @@
 import SocketServer
 import commands
 import socket
+import threading
 from SocketServer import ThreadingMixIn
 from dynamo import db as _db
 
@@ -41,16 +42,17 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		print "size %d" % int(self.size)
 		"""
 		
-		file_name = '/tmp/demofile'
+		file_name = '/tmp/read-file-%s' % threading.current_thread().ident
 		f = open(file_name, 'w')
 		f.write(self.data)
 		f.close()
 		
-		self.cartype = commands.getoutput("./test_in/process -f type -n 1 %s" % file_name)
+		self.cartype = commands.getoutput("./process -f type -n 1 %s" % file_name)
 		#print "cartype: %s" % self.cartype
+		
 		try:
 			self.db.save_packet(int(self.cell), int(self.node), int(self.side), int(self.timestamp), int(self.cartype), self.data)
-			print saved
+			print "saved"
 		except ValueError, e:
 			print e
  

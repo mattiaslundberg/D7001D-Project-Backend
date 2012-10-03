@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import commands
 import socket
 import time
 
@@ -16,14 +17,22 @@ Rawdata			xx
 """
 
 if __name__ == '__main__':
-	s = socket.socket(
-		socket.AF_INET, socket.SOCK_STREAM)
-	s.connect(('localhost', 12345))
-	s.send('%32d' % 1)
-	s.send('%32d' % 2)
-	s.send('%8d' % 1)
-	s.send('%64d' % time.time())
-	data = "HELLO WORLD"
-	s.send('%32d' % len(data))
-	s.send(data)
-	s.close()
+	max_tests = 10
+	for f in commands.getoutput("ls ../pkt").split('\n'):
+		s = socket.socket(
+			socket.AF_INET, socket.SOCK_STREAM)
+		s.connect(('localhost', 12345))
+		s.send('%32d' % 2)
+		s.send('%32d' % 2)
+		s.send('%8d' % 1)
+		s.send('%64d' % time.time())
+		f_open = open('../pkt/%s' % f)
+		data = f_open.read()
+		f_open.close()
+		s.send('%32d' % len(data))
+		s.send(data)
+		s.close()
+		if max_tests < 0:
+			break
+		max_tests -= 1
+		time.sleep(1)

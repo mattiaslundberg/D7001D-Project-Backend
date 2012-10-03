@@ -8,9 +8,14 @@ user = os.environ['LTU_USER']
 class db:
 	def __init__(self):
 		self.conn = boto.dynamodb.connect_to_region('eu-west-1')
-		if not '12_LP1_DDB_D7001D_%s' % user in self.conn.list_tables():
-			self.create_db()
-		self.table = self.conn.get_table('12_LP1_DDB_D7001D_%s' % user)
+		if not '12_LP1_DATA_D7001D_%s' % user in self.conn.list_tables():
+			self.create_prim()
+		self.table = self.conn.get_table('12_LP1_DATA_D7001D_%s' % user)
+		
+		if not '12_LP1_CELLS_D7001D_%s' % user in self.conn.list_tables():
+			self.create_slave()
+		self.cells = self.conn.get_table('12_LP1_CELLS_D7001D_%s' % user)
+		print 'Created database'
 	
 	def load_packets(self, cell, side, cartype, start=0, end=2**64):
 		items = self.table.query(
@@ -19,7 +24,7 @@ class db:
 		)
 		ret = []
 		for item in items:
-			ret.append(item['data'])
+			ret.append({'data':item['data'], 'timestamp':item['timestamp']})
 		return ret
 	
 	def save_packet(self, cell, node, side, timestamp, cartype, data):
@@ -27,6 +32,7 @@ class db:
 			'cartype':cartype,
 			'side':side,
 			'data':data,
+			'timestamp':timestamp,
 		}
 		
 		item = self.table.new_item(
@@ -35,8 +41,26 @@ class db:
 			attrs=attr
 		)
 		item.put()
+		
+		items = self.cells.query(
+			hash_key=1,
+			range_key_condition=EQ(cell)
+		)
+		for it in items:
+			return
+		i = self.cells.new_item(hash_key=1, range_key=cell)
+		i.put()
 	
-	def create_db(self):
+	def load_cells(self):
+		cells = []
+		items = self.cells.query(
+			hash_key=1
+		)
+		for i in items:
+			cells.append(i['cell_id'])
+		return cells
+	
+	def create_prim(self):
 		schema = self.conn.create_schema(
 			hash_key_name='cell_side_car',
 			hash_key_proto_value=int,
@@ -45,11 +69,29 @@ class db:
 		)
 		
 		table = self.conn.create_table(
-			name='12_LP1_DDB_D7001D_%s' % user,
+			name='12_LP1_DATA_D7001D_%s' % user,
 			schema=schema,
 			read_units=10,
 			write_units=10
 		)
-		while not '12_LP1_DDB_D7001D_%s' % user in self.conn.list_tables():
+		
+		while not '12_LP1_DATA_D7001D_%s' % user in self.conn.list_tables():
 			time.sleep(5)
 	
+	def create_slave(self):
+		schema = self.conn.create_schema(
+			hash_key_name='nan',
+			hash_key_proto_value=int,
+			range_key_name='cell_id',
+			range_key_proto_value=int
+		)
+		
+		table = self.conn.create_table(
+			name='12_LP1_CELLS_D7001D_%s' % user,
+			schema=schema,
+			read_units=10,
+			write_units=10
+		)
+		
+		while not '12_LP1_CELLS_D7001D_%s' % user in self.conn.list_tables():
+			time.sleep(5)

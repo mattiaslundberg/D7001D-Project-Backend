@@ -15,10 +15,9 @@ class db:
 	def load_packets(self, _id):
 		item = self.table.query(hash_key=_id)
 		
-		if len(item) > 0:
-			return None
-		return item['data']
-		
+		for i in item:
+			return item['data']
+		return None
 	
 	def save_packet(self, _id, data):
 		attr = {
