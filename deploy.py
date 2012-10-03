@@ -36,6 +36,7 @@ FRONTEND_POLICY_DOWN = '12_LP1_FRONTENDDWNPOL_D7001D_%s' % user
 FRONTEND_ASG = '12_LP1_FRONTENDASG_D7001D_%s' % user
 FRONTEND_LC = '12_LP1_FRONTENDLC_D7001D_%s' % user
 
+FRONTEND_HTTP_AMI = 'ami-e7b5b493' # TODO change
 GUI_AMI_MASTER = 'ami-e7b5b493' # TODO change
 FRONTEND_INCOMING = '12_LP1_SQS_D7001D_FRONTEND_INCOMING_%s' % user
 FRONTEND_OUTGOING = '12_LP1_SQS_D7001D_FRONTEND_OUTGOING_%s' % user
@@ -54,9 +55,9 @@ class Connector():
 	def launch_instances(self, ami, num=1, extra_tags = {}):
 		# Launch one or more EC2 instances from AMI
 		self.res = self.conn.run_instances(
-			ami,
+			image_id=ami,
 			key_name='12_LP1_KEY_D7001D_%s' % user,
-			instance_type='c1.small',
+			instance_type='m1.small',
 			security_groups=['12_LP1_SEC_D7001D_%s' % user],
 			min_count=num, max_count=num,monitoring_enabled=True,
 			placement='eu-west-1a')
@@ -223,7 +224,7 @@ class Connector():
 		self.qin = AWSSQS(FRONTEND_INCOMING, create = True)
 		self.qout = AWSSQS(FRONTEND_OUTGOING, create = True)
 
-		self.launch_instances(1, ami = GUI_AMI_MASTER, extra_tags = {'Frontend' : 'True', 'Master' : 'True'})
+		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'True', 'Master' : 'True'})
 
 		# ELB with autoscale
 		ports = [(80, 80, 'http')]
@@ -240,7 +241,7 @@ class Connector():
 		self.lb.configure_health_check(hc)
 		
 		# Settings for launched instances
-		self.lc = LaunchConfiguration(name=FRONTEND_LC, image_id=FRONTEND_AMI,
+		self.lc = LaunchConfiguration(name=FRONTEND_LC, image_id=FRONTEND_HTTP_AMI,
 				key_name='12_LP1_KEY_D7001D_%s' % user,
 				instance_type='t1.micro',
 				security_groups=['12_LP1_SEC_D7001D_%s' % user])
