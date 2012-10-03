@@ -39,7 +39,6 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		print "side %d" % int(self.side)
 		print "timestamp %d" % int(self.timestamp)
 		print "size %d" % int(self.size)
-		print "data %s" % self.data
 		"""
 		
 		file_name = '/tmp/demofile'
@@ -48,7 +47,12 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		f.close()
 		
 		self.cartype = commands.getoutput("./test_in/process -f type -n 1 %s" % file_name)
-		self.db.save_packet(int(self.cell), int(self.node), int(self.side), int(self.timestamp), int(self.cartype), self.data)
+		#print "cartype: %s" % self.cartype
+		try:
+			self.db.save_packet(int(self.cell), int(self.node), int(self.side), int(self.timestamp), int(self.cartype), self.data)
+			print saved
+		except ValueError, e:
+			print e
  
 class ThreadingServer(ThreadingMixIn, SocketServer.TCPServer):
 	pass
