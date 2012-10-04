@@ -3,7 +3,7 @@ import os, time
 import logger
 import boto
 import boto.ec2
-from AWSSQS import AWSSQS
+from awssqs import awssqs
 
 GUI_AMI_WORKER = ''
 GUI_AMI_MASTER = '' # TODO CHANGE!
@@ -50,9 +50,9 @@ c = 0
 
 def getQ():
 	if qtoken is None:
-		qtoken = AWSSQS(MASTER_TOKEN, create = False)
+		qtoken = awssqs(MASTER_TOKEN, create = False)
 	if qin is None:
-		qin = AWSSQS(FRONTEND_INCOMING, create = False)
+		qin = awssqs(FRONTEND_INCOMING, create = False)
 
 
 while True:

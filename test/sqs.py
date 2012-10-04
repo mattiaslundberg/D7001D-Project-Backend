@@ -1,11 +1,11 @@
 import time
 import sys
 sys.path.append("..")
-from AWSSQS import AWSSQS
+from awssqs import awssqs
 
 msg = "test message"
 
-q = AWSSQS("testQ", create = True)
+q = awssqs("testQ", create = True)
 try:		
 	q.write(msg)
 

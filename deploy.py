@@ -13,7 +13,7 @@ from boto.ec2.cloudwatch import MetricAlarm
 from boto.ec2.autoscale.tag import Tag
 import boto.ec2.cloudwatch
 
-from AWSSQS import AWSSQS
+from awssqs import awssqs
 
 user = os.environ['LTU_USER']
 
@@ -230,9 +230,9 @@ class Connector():
 	
 	def start_gui_interface(self):
 		# SQS
-		self.qin = AWSSQS(FRONTEND_INCOMING, create = True)
-		self.qout = AWSSQS(FRONTEND_OUTGOING, create = True)
-		self.qtoken = AWSSQS(MASTER_TOKEN, create = True, visibility_timeout = TOKEN_TIME)
+		self.qin = awssqs(FRONTEND_INCOMING, create = True)
+		self.qout = awssqs(FRONTEND_OUTGOING, create = True)
+		self.qtoken = awssqs(MASTER_TOKEN, create = True, visibility_timeout = TOKEN_TIME)
 		self.qtoken.write("token")
 
 		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='t1.micro')

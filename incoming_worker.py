@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from AWSSQS import AWSSQS
+from awssqs import awssqs
 from calculated_db import db as _db
 import os, time, socket
 import urllib2
@@ -85,9 +85,9 @@ c = 0
 while True:
 	try:
 		if not qIncoming:
-			qIncoming = AWSSQS(FRONTEND_INCOMING)
+			qIncoming = awssqs(FRONTEND_INCOMING)
 		if not qOutgoing:
-			qOutgoing = AWSSQS(FRONTEND_OUTGOING)
+			qOutgoing = awssqs(FRONTEND_OUTGOING)
 
 		m = qIncoming.read()
 		if m is None:
@@ -136,7 +136,7 @@ while True:
 		logger.info("Result written %s" % xmltext)
 
 		if not qOutgoing:
-			qOutgoing = AWSSQS(FRONTEND_INCOMING)
+			qOutgoing = awssqs(FRONTEND_INCOMING)
 
 		qOutgoing.write("http://%s:8080/?requestid=%s" % (getdns(), requestID+".xml"))
 
