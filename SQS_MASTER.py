@@ -1,6 +1,8 @@
 #!/usr/bin/python
 import os, time
 import logger
+import boto
+import boto.ec2
 from AWSSQS import AWSSQS
 
 GUI_AMI_WORKER = ''
@@ -21,14 +23,14 @@ handler = logging.FileHandler('/tmp/SQSMASTER.log')
 logger.addHandler(handler) 
 logger.setLevel(logging.INFO)
 
+conn = boto.ec2.connect_to_region('eu-west-1')
 
-
-def launch_instances(self, ami, num=1, extra_tags = {}):
+def launch_instances(ami, num=1, extra_tags = {}, instance_type = "m1.small"):
 	# Launch one or more EC2 instances from AMI
-	res = self.conn.run_instances(
+	res = conn.run_instances(
 		image_id=ami,
 		key_name='12_LP1_KEY_D7001D_%s' % user,
-		instance_type='t1.micro',
+		instance_type=instance_type,
 		security_groups=['12_LP1_SEC_D7001D_%s' % user],
 		min_count=num, max_count=num,monitoring_enabled=True,
 		placement='eu-west-1a')
@@ -67,7 +69,7 @@ while True:
 			if length >= NUM_INSTANCES * SQS_LIMIT_HIGH:
 				# Launch instances
 				logger.info("Creating instances")
-				launch_instances(ami = GUI_AMI_WORKER, extra_tags = {'Frontend' : 'Worker'})
+				launch_instances(ami = GUI_AMI_WORKER, extra_tags = {'Frontend' : 'Worker'}, instance_type = "m1.small")
 				logger.info("Instance launched")
 				
 				NUM_INSTANCES += 1
@@ -78,11 +80,13 @@ while True:
 				qin.write("STOPINSTANCE")
 				NUM_INSTANCES -=1
 
-			if c != 0:
-				time.sleep(TOKEN_TIME) # So in total we wait TOKEN_TIME + INTERVALL meaning other guy(s) should have taken it on next run for sure if they are alive
-			
 			if c == 3: # We give up waiting and considering it dead
-				launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'})
+				launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='t1.micro')
+
+			if c != 0:
+				 # In total we wait TOKEN_TIME + INTERVALL + 10 meaning other guy(s) should have taken it on next run for sure if they are alive
+				 # +10 tp avoid race condition if they happend to be in sync in the first time
+				time.sleep(TOKEN_TIME+10)
 
 			c +=1
 

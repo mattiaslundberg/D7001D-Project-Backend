@@ -18,7 +18,7 @@ logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 INTERVALL = 30
-PRE_SLEEP_SHUTDOWN_TIME = 120
+#PRE_SLEEP_SHUTDOWN_TIME = 120
 
 #http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html
 AMAZON_META_DATA_URL = "http://169.254.169.254/latest/meta-data/public-ipv4" # amazon public ip.
@@ -74,28 +74,21 @@ def getdns():
 		logger.error('Exception %s' % e)
 		return "" # Should never happen...
 
-try:
-	db = _db()
-except:
-	pass
-
 if not os.path.exists(results):
 	os.makedirs(results)
 
-try:
-	qIncoming = AWSSQS(FRONTEND_INCOMING)
-except:
-	pass
-
-try:
-	qOutgoing = AWSSQS(FRONTEND_OUTGOING)
-except:
-	pass
+db = None
+qIncoming = None
+qOutgoing = None
+c = 0
 
 while True:
 	try:
 		if not qIncoming:
 			qIncoming = AWSSQS(FRONTEND_INCOMING)
+		if not qOutgoing:
+			qOutgoing = AWSSQS(FRONTEND_OUTGOING)
+
 		m = qIncoming.read()
 		if m is None:
 			# No job for me!
@@ -104,13 +97,15 @@ while True:
 
 		xmltext = m.get_body()
 		if xmltext == "STOPINSTANCE": # Special case
-			qIncoming.delete(m)
+			
 			#time.sleep(PRE_SLEEP_SHUTDOWN_TIME)
 			
 			f = urllib2.urlopen(INSTANCE_ID_URL)
 			instance_id = f.read()
 
 			conn = boto.ec2.connect_to_region('eu-west-1')
+
+			qIncoming.delete(m)
 
 			# Stop this instance
 			for r in conn.get_all_instances([instance_id]):
@@ -120,7 +115,8 @@ while True:
 					i.stop()
 
 			conn.close()
-			time.sleep(600) # Just do nothing until system is shutdown
+			time.sleep(600) # Just do nothing until system shutdown
+			continue
 
 
 		logger.info("Got message %s" % xmltext)	
@@ -149,3 +145,10 @@ while True:
 		logger.error('Exception %s' % e)
 		print e
 		time.sleep(60)
+		c +=1
+		if c >= 10: # Reset
+			db = None
+			qIncoming = None
+			qOutgoing = None
+			c = 0
+
