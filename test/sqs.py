@@ -1,17 +1,17 @@
 import time
 import sys
 sys.path.append("..")
-from AWSSQS import AWSSQS
+from awssqs import awssqs
 
 msg = "test message"
 
-q = AWSSQS("testQ", create = True)
+q = awssqs("testQ", create = True)
 try:		
 	q.write(msg)
 
 	assert q.length() == 1, "Queue length not right"
 
-	time.sleep(60)
+	time.sleep(60) # Give it time to get the msg into the queue
 	m = q.read()
 	assert m != None, "m is None!"
 	text = m.get_body()

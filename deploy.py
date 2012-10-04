@@ -13,7 +13,7 @@ from boto.ec2.cloudwatch import MetricAlarm
 from boto.ec2.autoscale.tag import Tag
 import boto.ec2.cloudwatch
 
-from AWSSQS import AWSSQS
+from awssqs import awssqs
 
 user = os.environ['LTU_USER']
 
@@ -57,12 +57,12 @@ class Connector():
 		self.cwconn = boto.connect_cloudwatch(region=boto.ec2.cloudwatch.regions()[2])
 		self.sconn = AutoScaleConnection(region=boto.ec2.autoscale.regions()[2])
 	
-	def launch_instances(self, ami, num=1, extra_tags = {}):
+	def launch_instances(self, ami, num=1, extra_tags = {}, instance_type = "m1.small"):
 		# Launch one or more EC2 instances from AMI
 		self.res = self.conn.run_instances(
 			image_id=ami,
 			key_name='12_LP1_KEY_D7001D_%s' % user,
-			instance_type='m1.small',
+			instance_type=instance_type,
 			security_groups=['12_LP1_SEC_D7001D_%s' % user],
 			min_count=num, max_count=num,monitoring_enabled=True,
 			placement='eu-west-1a')
@@ -230,12 +230,12 @@ class Connector():
 	
 	def start_gui_interface(self):
 		# SQS
-		self.qin = AWSSQS(FRONTEND_INCOMING, create = True)
-		self.qout = AWSSQS(FRONTEND_OUTGOING, create = True)
-		self.qtoken = AWSSQS(MASTER_TOKEN, create = True, visibility_timeout = TOKEN_TIME)
+		self.qin = awssqs(FRONTEND_INCOMING, create = True)
+		self.qout = awssqs(FRONTEND_OUTGOING, create = True)
+		self.qtoken = awssqs(MASTER_TOKEN, create = True, visibility_timeout = TOKEN_TIME)
 		self.qtoken.write("token")
 
-		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'})
+		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='t1.micro')
 
 		# ELB with autoscale
 		ports = [(80, 80, 'http')]
