@@ -3,7 +3,9 @@ import xml.parsers.expat
 from subprocess import call
 import commands
 import dynamo
-
+import datetime
+import time
+import os
 
 ##requestID = 1
 ##requestType
@@ -14,6 +16,7 @@ import dynamo
 
 data = []
 testing=False
+debug = True
 
 key = 'NOKEY'
 dicti = {}
@@ -146,7 +149,7 @@ def XML_ListCells(cells):
 
 def XML_CellStatSpeed(rawListCellID_0,rawListCellID_1):
     #print "rawListCellID_0: "+str(rawListCellID_0)
-    asAlpha=['AA']+map(chr, range(65, 91)) #nice way of converting 1 to A, 2 to B etc...
+    asAlpha=['None']+map(chr, range(65, 91)) #nice way of converting 1 to A, 2 to B etc...
     cellID = dicti['CellID']
     content=''
     content+=one_line('CellID',str(cellID),2)
@@ -176,14 +179,14 @@ def XML_CellStatSpeed(rawListCellID_0,rawListCellID_1):
 def XML_CellStatNet(resultTuple):
     #fetch from resultTuple
     carTypeFirst = (resultTuple[0])[0]
-    timestampFirst = (resultTuple[0])[1]
+    timestampFirst = dateToMs((resultTuple[0])[1])
     carTypeLast = (resultTuple[1])[0]
-    timestampLast = (resultTuple[1])[1]
+    timestampLast = dateToMs((resultTuple[1])[1])
     nrOfCars = resultTuple[2]
     totalAmountOfData = resultTuple[3]
 
     
-    asAlpha=['AA']+map(chr, range(65, 91)) #nice way of converting 1 to A, 2 to B etc...
+    asAlpha=['None']+map(chr, range(65, 91)) #nice way of converting 1 to A, 2 to B etc...
     cellID = dicti['CellID']
     content=''
     content+=one_line('CellID',str(cellID),2)
@@ -202,7 +205,7 @@ def XML_CellStatNet(resultTuple):
     return XML(reqType(1)+step('Cell',content,1),0)
 
 ######################## function for processing data ############################
-def processData(cartype,libList):
+def processData(carType,libList):
         #process data
     
     
@@ -226,9 +229,14 @@ def processData(cartype,libList):
         # ERROR[0,1], MIN[0-200], MAX[0-200], AVERAGE[0-200]
         result="0 29 198 113"
     else:
-        call= "./rawpacket/process64 -f speed -n "+count+" "+filesList   #'speed' command
+        #count=3
+        #filesList='./pkt/ID10_120915-102613-588 ' + './pkt/ID10_120915-102619-198'+ ' ./pkt/ID10_120915-102624-828'
+        call= "./rawpacket/process64 -f speed -n "+str(count)+" "+filesList   #'speed' command
+        print call
         result = commands.getoutput(call)
-    
+
+    if debug:
+        print 'process result: '+result
     #handle process result
     res = result.split()
     res_working = bool(res[0]==0) #True if all is OK
@@ -236,7 +244,7 @@ def processData(cartype,libList):
     res_max = res[2] #0-200
     res_average = res[3] #0-200
     if not res_working:
-        print 'error while processing'
+        print 'error while processing: code '+res[0]
         #throw exception!
         
     #clean temp directory from files
@@ -247,9 +255,22 @@ def processData(cartype,libList):
     return carType, res_min, res_max, res_average #tuple - to be added to result list
 
 
+def dateToMs(datestring):          #datestring format:   '201210052359'
+    dt=datetime.datetime(int(d[0:4]),int(d[4:6]),int(d[6:8]),int(d[8:10]),int(d[10:12]),0,0)
+    time.mktime(dts.timetuple())
+
+def msToDate(ms):                  #ms format: float/long in ms
+    dt = datetime.datetime.fromtimestamp(ms)
+    return dt.strftime("%Y%m%d%H%M")
+
 ###################################################
 ######## parse code starts running here  ##########
 ###################################################
+def parsa(xml_string):
+    xml,id = parse(xml_string)
+    print xml
+    return
+
 
 def parse(xml_string):      #uncomment when running for real
     clearData()
@@ -258,7 +279,8 @@ def parse(xml_string):      #uncomment when running for real
     p.StartElementHandler = start_element
     p.EndElementHandler = end_element
     p.CharacterDataHandler = char_data
- 
+    if debug:
+      print 'starting parsing'
     try:
         #f = file("./parser_test/RequestIDXXXXXXX.XML","r")    
         p.Parse(xml_string)
@@ -266,7 +288,8 @@ def parse(xml_string):      #uncomment when running for real
 
         #stri = file("./parser_test/RequestIDXXXXXXX.XML","r").read()
         #p.Parse(stri)
-             
+        if debug:
+           print 'finished parsing'
 
     except xml.parsers.expat.ExpatError:
            return XML_XMLError(),dicti['RequestID']
@@ -292,7 +315,7 @@ def parse(xml_string):      #uncomment when running for real
     if requestType == 'ListCells':#いいいいいいいいいいいいいい
         cells = []
         if testing:
-            cells=[123,234,534,45,867,67]
+            cells=[1,2,534,45,867,67]
         else:
             d = dynamo.db()
             cells = d.load_cells()
@@ -317,6 +340,10 @@ def parse(xml_string):      #uncomment when running for real
             cellID = dicti['CellID']
             start = dicti['TimeStart']
             end = dicti['TimeStop']
+
+            #cells = d.load_cells()
+            #if cellID not in cells:
+            #     return XML_CellIDError()
             
             ####cell side A
             side=0
@@ -324,18 +351,17 @@ def parse(xml_string):      #uncomment when running for real
             
             cartype = 1
             while cartype<12:
-                #                          0/1   1-11   start=0, end=4294967296
-                
-                cells = d.load_cells()
-                if cellID not in cells:
-                     return XML_CellIDError()
-                    
-                libList = d.load_packets(cellID, side, cartype, start, end)
+                #libList = d.load_packets(int(cellID), int(side), int(cartype), int(dateToMs(start)), int(dateToMs(end)))
+                libList = d.load_packets(int(cellID), int(side), int(cartype), 0, 2**64)
                     #process
                 if libList: #if list is not empty
+                    print 'processing data...'
                     tuplee = processData(cartype,libList)
                     rawListCellID_0.append(tuplee)
-                cartype = cartype-1
+                
+                else:
+                    print 'list length: '+str(len(libList))
+                cartype = cartype+1
                 
             ####cell side B
             side=1
@@ -343,18 +369,17 @@ def parse(xml_string):      #uncomment when running for real
             
             cartype = 1
             while cartype<12:
-                #                          0/1   1-11   start=0, end=4294967296
-                
-                cells = d.load_cells()
-                if cellID not in cells:
-                     return XML_CellIDError()
-                    
-                libList = d.load_packets(cellID, side, cartype, start, end)
+                #libList = d.load_packets(int(cellID), int(side), int(cartype), int(dateToMs(start)), int(dateToMs(end)))
+                libList = d.load_packets(int(cellID), int(side), int(cartype), 0, 2**64)
                     #process
                 if libList: #if list is not empty
+                    print 'processing data...'
                     tuplee = processData(cartype,libList)
                     rawListCellID_1.append(tuplee)
-                cartype = cartype-1
+                
+                else:
+                    print 'list length: '+str(len(libList))
+                cartype = cartype+1
                     
         #error message cases
         
@@ -368,6 +393,8 @@ def parse(xml_string):      #uncomment when running for real
     if requestType == 'CellStatNet':#いいいいいいいいいいいいいい
         #result
         if testing:
+           if debug:
+              print 'starting CellStatNet'
            #tuple with  FirstCar     LastCar          TotalNrCars TotalAmountOfData(MB)
            resultTuple = (1,198708170000),(5,198708170001),7,10
            #libList = [{'data':'123,1231,123,213', 'timestamp':'12341234'},{'data':'123,123', 'timestamp':1234}]
@@ -378,42 +405,50 @@ def parse(xml_string):      #uncomment when running for real
             start = dicti['TimeStart']
             end = dicti['TimeStop']
             libList = []
-
+            #cells = d.load_cells()
+            #if cellID not in cells:
+            #    return XML_CellIDError()
             cartype = 1
             while cartype<12:
-                #                              0/1   1-11   start=0, end=4294967296
-                try:
-                    libs=[]
-                    libs.append(d.load_packets(cellID, 0, cartype, start, end))       #side 0
-                    libs.append(d.load_packets(cellID, 1, cartype, start, end))  #side 1
+                #                         0/1   1-11   start=0, end=4294967296
+                
                     
+                    
+                    libs=[]
+                    libs.extend(d.load_packets(int(cellID), 0, int(cartype), int(dateToMs(start)), int(dateToMs(end)) ))       #side 0
+                    libs.extend(d.load_packets(int(cellID), 1, int(cartype), int(dateToMs(start)), int(dateToMs(end)) ))       #side 1
                     for lib in libs:    #adding cartype as key to each car's library
                          lib['cartype']=cartype
-                    libList.append(libs)
+                    libList.extend(libs)
            
-                except CellIDNotFoundError :#error message cases
-                    print XML_CellIDError()
-                cartype = cartype-1
+                    cartype = cartype+1
            
             ##create a list of tuples of the form (CarType,TimeStamp)
-            carList
-            for lib in libList:
-               carList.append((lib['cartype'],lib['timestamp'])) 
-            carList.sort(key=lambda tup: tup[1]) #sort by timestamp
+            carList = []
+            if libList!=[]:
+                if debug:
+                    print 'libList=',libList
+                for lib in libList:
+                    ctype=lib['cartype']
+                    tstamp=lib['timestamp']
+                    carList.append((ctype,tstamp))
+                carList.sort(key=lambda tup: tup[1]) #sort by timestamp
 
-            #TotalAmountOfData??
-                #don't bother right now...
-            totalAmtData = 99
-                                
-            #get first and last of list
-            resultTuple = carList[0],carList[-1],len(carList),totalAmtData
+                #TotalAmountOfData??
+                    #don't bother right now...
+                totalAmtData = 99
+                                    
+                #get first and last of list
+                resultTuple = carList[0],carList[-1],len(carList),totalAmtData
+            else:
+                resultTuple = (0,0),(0,0),0,0
         #create xml
         xmlText=XML_CellStatNet(resultTuple)
         #return results
-        print xmlText
+        #print xmlText
         return xmlText,dicti['RequestID']
 
-
+    print 'WARNING! no RequestID found!'
     return XML_XMLError(),dicti['RequestID']
 
 
