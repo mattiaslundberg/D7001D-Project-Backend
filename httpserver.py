@@ -18,12 +18,10 @@ logger.setLevel(logging.INFO)
 
 class Handler(BaseHTTPRequestHandler):
 	""" Handle HTTP requests """
-	def __init__(self):
-		self.db = None
+	db = None
 	
 	def do_GET(self):
 		""" Handle GET requests """
-		# ONLY HEALTHCHECK
 		self.send_response(200)
 		self.send_header('Content-type','text/html')
 		self.end_headers()
@@ -35,7 +33,7 @@ class Handler(BaseHTTPRequestHandler):
 			qs = urlparse.parse_qs(tmp)
 			if qs.has_key('requestid'):
 				requestid = qs['requestid'][0]
-				data = self._getdbdata(requestid)
+				data = self._getdbdata(int(requestid))
 				if data is None:
 					self.wfile.write("That result do not exist in database")
 				else:
@@ -44,7 +42,7 @@ class Handler(BaseHTTPRequestHandler):
 
 		self.wfile.write('You did not write GET /?requestid=123')
 
-	def _getdbdata(requestid):
+	def _getdbdata(self, requestid):
 		if self.db is None:
 			self.db = _db()
 		return self.db.read(requestid)
