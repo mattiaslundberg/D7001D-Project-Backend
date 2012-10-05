@@ -31,7 +31,6 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 	db = _db()
 	
 	def handle(self):
-		print "request"
 		# self.request is the TCP socket connected to the client
 		raw = self.request.recv(21)
 		while len(raw) < 21:
@@ -63,7 +62,7 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		f = open(file_name, 'w')
 		f.write(self.data)
 		f.close()
-		self.cartype = commands.getoutput("./process -f type -n 1 %s" % file_name)
+		self.cartype = commands.getoutput("/home/ubuntu/process -f type -n 1 %s" % file_name)
 		logger.info("cartype: %s" % self.cartype)
 		
 		try:
