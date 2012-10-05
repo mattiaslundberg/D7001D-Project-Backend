@@ -2,6 +2,7 @@
 import commands
 import socket
 import time
+import struct
 
 """
 Send some random testdata.
@@ -13,7 +14,6 @@ Side (flags)	8	zero equals right side and one equals left side
 Timestamp		64	UTC timestamp in ms
 Size			32	tells amount of bytes of rawdata
 Rawdata			xx
-
 """
 
 if __name__ == '__main__':
@@ -21,18 +21,14 @@ if __name__ == '__main__':
 	for f in commands.getoutput("ls ../pkt").split('\n'):
 		s = socket.socket(
 			socket.AF_INET, socket.SOCK_STREAM)
-		s.connect(('wsnelbgroup2-1439286345.eu-west-1.elb.amazonaws.com', 12345))
-		s.send('%32d' % 2)
-		s.send('%32d' % 2)
-		s.send('%8d' % 1)
-		s.send('%64d' % time.time())
+		s.connect(('localhost', 12345))
 		f_open = open('../pkt/%s' % f)
 		data = f_open.read()
 		f_open.close()
-		s.send('%32d' % len(data))
-		s.send(data)
+		tosend = struct.pack('!IIBQI',1,2,0,time.time()*1000,len(data))
+		s.send(tosend + data)
 		s.close()
 		if max_tests < 0:
 			break
-		max_tests -= 1
-		time.sleep(1)
+		max_tests-=1
+		time.sleep(10)
