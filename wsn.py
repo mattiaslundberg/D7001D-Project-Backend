@@ -5,6 +5,7 @@ import commands
 import socket
 import threading
 import logging
+import struct
 from SocketServer import ThreadingMixIn
 from dynamo import db as _db
 
@@ -31,16 +32,23 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 	
 	def handle(self):
 		# self.request is the TCP socket connected to the client
-		self.cell = self.request.recv(32, socket.MSG_WAITALL)
-		self.node = self.request.recv(32, socket.MSG_WAITALL)
-		self.side = self.request.recv(8, socket.MSG_WAITALL)
-		self.timestamp = self.request.recv(64, socket.MSG_WAITALL)
-		self.size = self.request.recv(32, socket.MSG_WAITALL)
+		raw = self.request.recv(21)
+		while len(raw) < 21:
+			tmp = self.request.recv(1)
+			if not tmp:
+				break
+			raw += tmp
+		data = struct.unpack('!IIBQI', raw)
+		self.cell = data[0]
+		self.node = data[1]
+		self.side = data[2]
+		self.timestamp = data[3]
+		self.size = data[4]
 		try:
-			self.data = self.request.recv(int(self.size), socket.MSG_WAITALL)
+			self.data = self.request.recv(self.size)
 		except:
-			return # Test helth
-		
+			logger.info('Health check')
+			return # trying
 		
 		# DEBUG
 		logger.info("recived data")
@@ -50,14 +58,12 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		logger.info("timestamp %d" % int(self.timestamp))
 		logger.info("size %d" % int(self.size))
 		
-		
 		file_name = '/tmp/read-file-%s' % threading.current_thread().ident
 		f = open(file_name, 'w')
 		f.write(self.data)
 		f.close()
-		
 		self.cartype = commands.getoutput("/home/ubuntu/process -f type -n 1 %s" % file_name)
-		#print "cartype: %s" % self.cartype
+		logger.info("cartype: %s" % self.cartype)
 		
 		try:
 			self.db.save_packet(int(self.cell), int(self.node), int(self.side), int(self.timestamp), int(self.cartype), self.data)

@@ -7,6 +7,8 @@ class awssqs:
 	def __init__(self, name, create = False, visibility_timeout = 60):
 		self.visibility_timeout = visibility_timeout
 		self.conn = SQSConnection(region=boto.sqs.regions()[1]) # eu-west1
+		# Forcing create = True
+		create = True
 		if create:
 			self.q = self.conn.create_queue(name)
 		else:

@@ -9,21 +9,19 @@ import commands
 import urlparse
 import os
 
+from settings import *
+
 logger = logging.getLogger('webserver')
 handler = logging.FileHandler('/tmp/webserver.log')
 logger.addHandler(handler) 
 logger.setLevel(logging.INFO)
 
-run_port = 8080
-
 class Handler(BaseHTTPRequestHandler):
 	""" Handle HTTP requests """
-	def __init__(self):
-		self.db = None
+	db = None
 	
 	def do_GET(self):
 		""" Handle GET requests """
-		# ONLY HEALTHCHECK
 		self.send_response(200)
 		self.send_header('Content-type','text/html')
 		self.end_headers()
@@ -35,7 +33,7 @@ class Handler(BaseHTTPRequestHandler):
 			qs = urlparse.parse_qs(tmp)
 			if qs.has_key('requestid'):
 				requestid = qs['requestid'][0]
-				data = self._getdbdata(requestid)
+				data = self._getdbdata(int(requestid))
 				if data is None:
 					self.wfile.write("That result do not exist in database")
 				else:
@@ -44,7 +42,7 @@ class Handler(BaseHTTPRequestHandler):
 
 		self.wfile.write('You did not write GET /?requestid=123')
 
-	def _getdbdata(requestid):
+	def _getdbdata(self, requestid):
 		if self.db is None:
 			self.db = _db()
 		return self.db.read(requestid)
@@ -54,7 +52,7 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	each request will be served in separate thread """
 
 if __name__ == '__main__': # If running directly
-	server = ThreadedHTTPServer(('', run_port), Handler)
-	logger.info('Starting server on port %s' % run_port)
-	print 'Listening on port %s' % run_port
+	server = ThreadedHTTPServer(('', HTTP_PORT), Handler)
+	logger.info('Starting server on port %s' % HTTP_PORT)
+	print 'Listening on port %s' % HTTP_PORT
 	server.serve_forever()
