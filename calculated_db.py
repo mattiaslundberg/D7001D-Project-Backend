@@ -13,7 +13,7 @@ class db:
 		self.table = self.conn.get_table('12_LP1_CALC_D7001D_%s' % user)
 	
 	def read(self, _id):
-		item = self.table.query(hash_key=_id)
+		item = self.table.get_item(hash_key=_id)
 		
 		for i in item:
 			return item['data']

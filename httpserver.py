@@ -9,12 +9,12 @@ import commands
 import urlparse
 import os
 
+from settings import *
+
 logger = logging.getLogger('webserver')
 handler = logging.FileHandler('/tmp/webserver.log')
 logger.addHandler(handler) 
 logger.setLevel(logging.INFO)
-
-run_port = 8080
 
 class Handler(BaseHTTPRequestHandler):
 	""" Handle HTTP requests """
@@ -54,7 +54,7 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	each request will be served in separate thread """
 
 if __name__ == '__main__': # If running directly
-	server = ThreadedHTTPServer(('', run_port), Handler)
-	logger.info('Starting server on port %s' % run_port)
-	print 'Listening on port %s' % run_port
+	server = ThreadedHTTPServer(('', HTTP_PORT), Handler)
+	logger.info('Starting server on port %s' % HTTP_PORT)
+	print 'Listening on port %s' % HTTP_PORT
 	server.serve_forever()

@@ -11,9 +11,11 @@ while True:
 	try:
 		m = q.read()
 		if m is not None:
-			f = urllib2.urlopen(m.get_body())
+			url = m.get_body()
+			print "url %s" % url
+			f = urllib2.urlopen(url)
 			data = f.read()
-			print "MSG: "+data
+			print "MSG: %s" % data
 		else:
 			print "empty"
 	except Exception,e:

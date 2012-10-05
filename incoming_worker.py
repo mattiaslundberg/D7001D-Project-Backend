@@ -7,6 +7,7 @@ import urllib2
 import boto.ec2
 from settings import * # Global variables
 from myparser import *
+import logging
 
 logger = logging.getLogger('handleRequest')
 handler = logging.FileHandler('/tmp/handleRequest.log')
@@ -24,8 +25,6 @@ conn = None
 dns = None
 
 def handleRequest(xmltext):
-	#print "TODO: Handle request", xmltext
-	#logger.info("TODO: Handle request")
 	return parse(xmltext)
 	#return (xmltext,1) # return parse(xmltext)
 
@@ -40,7 +39,7 @@ def getdns():
 			return dns
 	except Exception, e:
 		logger.error('Exception %s' % e)
-		return "" # Should never happen...
+		return "localhost" # Should never happen...
 
 if not os.path.exists(results):
 	os.makedirs(results)
@@ -60,7 +59,9 @@ while True:
 		m = qIncoming.read()
 		if m is None:
 			# No job for me!
-			time.sleep(INTERVALL)
+			print "no job"
+			#time.sleep(INTERVALL)
+			time.sleep(10)
 			continue
 
 		xmltext = m.get_body()
@@ -86,11 +87,13 @@ while True:
 
 
 		logger.info("Got message %s" % xmltext)
+		print "Got message %s" % xmltext
 		result, requestID = handleRequest(xmltext)
 
 		if not db:
 			db = _db()
 
+		print "Writing result %s" % result
 		db.write(requestID, result)
 
 		logger.info("Result written %s" % xmltext)
@@ -98,13 +101,13 @@ while True:
 		if not qOutgoing:
 			qOutgoing = awssqs(FRONTEND_INCOMING)
 
-		qOutgoing.write("http://%s:8080/?requestid=%s" % (getdns(), requestID+".xml"))
+		qOutgoing.write("http://%s:%s/?requestid=%s" % (getdns(), HTTP_PORT, requestID))
 
 		qIncoming.delete(m)
 	except Exception, e:
 		logger.error('Exception %s' % e)
+		time.sleep(10)
 		print e
-		time.sleep(60)
 		c +=1
 		if c >= 10: # Reset
 			db = None

@@ -382,19 +382,20 @@ def parse(xml_string):      #uncomment when running for real
             cartype = 1
             while cartype<12:
                 #                              0/1   1-11   start=0, end=4294967296
-                try:
-                    libs=[]
-                    libs.append(d.load_packets(cellID, 0, cartype, start, end))       #side 0
-                    libs.append(d.load_packets(cellID, 1, cartype, start, end))  #side 1
-                    
-                    for lib in libs:    #adding cartype as key to each car's library
-                         lib['cartype']=cartype
-                    libList.append(libs)
-           
-                except CellIDNotFoundError :#error message cases
-                    print XML_CellIDError()
+                cells = d.load_cells()
+                if cellID not in cells:
+                    return XML_CellIDError()
+
+                libs=[]
+                libs.append(d.load_packets(cellID, 0, cartype, start, end))       #side 0
+                libs.append(d.load_packets(cellID, 1, cartype, start, end))  #side 1
+                
+                for lib in libs:    #adding cartype as key to each car's library
+                     lib['cartype']=cartype
+                libList.append(libs)
+
                 cartype = cartype-1
-           
+ 
             ##create a list of tuples of the form (CarType,TimeStamp)
             carList
             for lib in libList:
