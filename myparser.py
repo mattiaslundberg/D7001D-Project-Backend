@@ -324,15 +324,17 @@ def parse(xml_string):      #uncomment when running for real
             
             cartype = 1
             while cartype<12:
-                #                              0/1   1-11   start=0, end=4294967296
-                try:
-                    libList = d.load_packets(cellID, side, cartype, start, end)
+                #                          0/1   1-11   start=0, end=4294967296
+                
+                cells = d.load_cells()
+                if cellID not in cells:
+                     return XML_CellIDError()
+                    
+                libList = d.load_packets(cellID, side, cartype, start, end)
                     #process
-                    if libList: #if list is not empty
-                        tuplee = processData(cartype,libList)
-                        rawListCellID_0.append(tuplee)
-                except CellIDNotFoundError: #other required errors: StartTime, EndTime
-                    print XML_CellIDError()
+                if libList: #if list is not empty
+                    tuplee = processData(cartype,libList)
+                    rawListCellID_0.append(tuplee)
                 cartype = cartype-1
                 
             ####cell side B
