@@ -291,7 +291,7 @@ class Connector():
 				if i.state == u'running':
 					print 'Deploying code to %s.' % i.public_dns_name
 					my_key="-i $HOME/.ssh/12_LP1_KEY_D7001D_%s.pem" % user
-					md="ssh -C -o StrictHostKeyChecking=no -Y $my_key ubuntu@%s" % i.public_dns_name
+					md="ssh -C -o StrictHostKeyChecking=no -Y %s ubuntu@%s" % (my_key, i.public_dns_name)
 					
 					print commands.getoutput('scp -o StrictHostKeyChecking=no %s * ubuntu@%s:~/' % (my_key, i.public_dns_name))
 					print commands.getoutput('%s sudo chmod +x *' % (md) )
