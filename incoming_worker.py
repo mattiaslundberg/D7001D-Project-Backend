@@ -6,7 +6,7 @@ import os, time, socket
 import urllib2
 import boto.ec2
 from settings import * # Global variables
-from parser import * # parser
+from myparser import *
 
 logger = logging.getLogger('handleRequest')
 handler = logging.FileHandler('/tmp/handleRequest.log')
@@ -24,9 +24,10 @@ conn = None
 dns = None
 
 def handleRequest(xmltext):
-	print "TODO: Handle request", xmltext
-	logger.info("TODO: Handle request")
-	return (1, xmltext) # return parse(xmltext)
+	#print "TODO: Handle request", xmltext
+	#logger.info("TODO: Handle request")
+	return parse(xmltext)
+	#return (xmltext,1) # return parse(xmltext)
 
 def getdns():
 	try:
@@ -85,8 +86,8 @@ while True:
 
 
 		logger.info("Got message %s" % xmltext)
-		requestID, result = handleRequest(xmltext)
-		
+		result, requestID = handleRequest(xmltext)
+
 		if not db:
 			db = _db()
 

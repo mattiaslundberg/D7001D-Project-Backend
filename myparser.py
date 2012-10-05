@@ -13,7 +13,7 @@ import dynamo
 
 
 data = []
-testing=True
+testing=False
 
 key = 'NOKEY'
 dicti = {}
