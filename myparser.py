@@ -258,26 +258,23 @@ def parse(xml_string):      #uncomment when running for real
     p.StartElementHandler = start_element
     p.EndElementHandler = end_element
     p.CharacterDataHandler = char_data
-
-##    if testing:
-##        f = file("./parser_test/RequestIDXXXXXXX.XML","r")
-##        try:
-##            p.Parse(f.read())
-##
-##        except xml.parsers.expat.ExpatError:
-##            return XML_XMLError(),dicti['RequestID']
-##    else:
-   
+ 
     try:
-           p.Parse( p.parse(xml_string))
+        #f = file("./parser_test/RequestIDXXXXXXX.XML","r")    
+        p.Parse(xml_string)
+        #p.Parse(f.read())
+
+        #stri = file("./parser_test/RequestIDXXXXXXX.XML","r").read()
+        #p.Parse(stri)
+             
 
     except xml.parsers.expat.ExpatError:
            return XML_XMLError(),dicti['RequestID']
-    except AttributeError:
-           dicti['RequestID']=0
-           xmll = XML_XMLError()
-           #print xmll
-           return xmll,dicti['RequestID']
+##    except AttributeError:
+##           dicti['RequestID']=0
+##           xmll = XML_XMLError()
+##           #print xmll
+##           return xmll,dicti['RequestID']
 
     #by now, all neccecary information should be stored in the dictionary named 'dicti'
     #print dicti,n()
