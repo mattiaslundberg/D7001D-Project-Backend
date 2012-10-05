@@ -1,6 +1,6 @@
 from boto.sqs.connection import SQSConnection
 from boto.sqs.message import Message
-import boto.sqs # Needed for boto.sqs.regions()
+import boto.sqs
 import time
 
 class awssqs:
@@ -51,6 +51,6 @@ class awssqs:
 		self.q.delete_message(m)
 
 	def deleteQueue(self):
-		self.conn.delete_queue(self.conn.get_queue(self.name), force_deletion = True)
+		self.conn.delete_queue(self.q, force_deletion = True)
 		self.q = None
 		self.conn.close()

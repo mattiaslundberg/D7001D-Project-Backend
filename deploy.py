@@ -14,37 +14,7 @@ from boto.ec2.autoscale.tag import Tag
 import boto.ec2.cloudwatch
 
 from awssqs import awssqs
-
-user = os.environ['LTU_USER']
-
-
-#### WSN NAMES ####
-WSN_ELB = 'wsnelbgroup2'
-WSN_SCALE_UP = '12_LP1_WSNUP_D7001D_%s' % user
-WSN_SCALE_DOWN = '12_LP1_WSNDWN_D7001D_%s' % user
-WSN_POLICY_UP = '12_LP1_WSNUPPOL_D7001D_%s' % user
-WSN_POLICY_DOWN = '12_LP1_WSNDWNPOL_D7001D_%s' % user
-WSN_ASG = '12_LP1_WSNASG_D7001D_%s' % user
-WSN_LC = '12_LP1_WSNLC_D7001D_%s' % user
-WSN_AMI ='ami-b95050cd'
-
-#### GUI NAMES ####
-FRONTEND_ELB = 'FRONTENDelbgroup2'
-FRONTEND_SCALE_UP = '12_LP1_FRONTENDUP_D7001D_%s' % user
-FRONTEND_SCALE_DOWN = '12_LP1_FRONTENDDWN_D7001D_%s' % user
-FRONTEND_POLICY_UP = '12_LP1_FRONTENDUPPOL_D7001D_%s' % user
-FRONTEND_POLICY_DOWN = '12_LP1_FRONTENDDWNPOL_D7001D_%s' % user
-FRONTEND_ASG = '12_LP1_FRONTENDASG_D7001D_%s' % user
-FRONTEND_LC = '12_LP1_FRONTENDLC_D7001D_%s' % user
-
-FRONTEND_HTTP_AMI = 'ami-e7b5b493' # TODO change
-GUI_AMI_MASTER = 'ami-e7b5b493' # TODO change
-FRONTEND_INCOMING = '12_LP1_SQS_D7001D_FRONTEND_INCOMING_%s' % user
-FRONTEND_OUTGOING = '12_LP1_SQS_D7001D_FRONTEND_OUTGOING_%s' % user
-
-MASTER_TOKEN = "12_LP1_SQS_D7001D_FRONTEND_MASTER_%s" % user
-INTERVALL = 60
-TOKEN_TIME = INTERVALL*4
+from settings import * # Global variables
 
 class Connector():
 	def __init__(self):
@@ -320,7 +290,7 @@ class Connector():
 				if i.state == u'running':
 					print 'Deploying code to %s.' % i.public_dns_name
 					my_key="-i $HOME/.ssh/12_LP1_KEY_D7001D_%s.pem" % user
-					md="ssh -C -o StrictHostKeyChecking=no -Y $my_key ubuntu@%s" % i.public_dns_name
+					md="ssh -C -o StrictHostKeyChecking=no -Y %s ubuntu@%s" % (my_key, i.public_dns_name)
 					
 					print commands.getoutput('scp -o StrictHostKeyChecking=no %s * ubuntu@%s:~/' % (my_key, i.public_dns_name))
 					print commands.getoutput('%s sudo chmod +x *' % (md) )

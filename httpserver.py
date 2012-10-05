@@ -49,17 +49,6 @@ class Handler(BaseHTTPRequestHandler):
 			self.db = _db()
 		return self.db.read(requestid)
 		
-	def do_POST(self):
-		""" Handle post requests """
-		try:
-			logger.info('POST Request') # For debug purposes
-			# Get the parameters as a list
-			param = urlparse.parse_qs(self.rfile.read(int(self.headers['Content-Length'])))
-			logger.info('POST Parameters %s' % param)
-		except Exception, e:
-			# Always log exceptions
-			logger.error('Exception %s' % e)
-
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	""" Add thread support for the http server 
 	each request will be served in separate thread """
