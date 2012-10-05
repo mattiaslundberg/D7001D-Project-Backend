@@ -21,7 +21,7 @@ if __name__ == '__main__':
 	for f in commands.getoutput("ls ../pkt").split('\n'):
 		s = socket.socket(
 			socket.AF_INET, socket.SOCK_STREAM)
-		s.connect(('localhost', 12345))
+		s.connect(('ec2-176-34-201-170.eu-west-1.compute.amazonaws.com', 12345))
 		s.send('%32d' % 2)
 		s.send('%32d' % 2)
 		s.send('%8d' % 1)

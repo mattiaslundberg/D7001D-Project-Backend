@@ -30,7 +30,10 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		self.side = self.request.recv(8, socket.MSG_WAITALL)
 		self.timestamp = self.request.recv(64, socket.MSG_WAITALL)
 		self.size = self.request.recv(32, socket.MSG_WAITALL)
-		self.data = self.request.recv(int(self.size), socket.MSG_WAITALL)
+		try:
+			self.data = self.request.recv(int(self.size), socket.MSG_WAITALL)
+		except:
+			return # Test helth
 		
 		"""
 		# DEBUG
@@ -47,7 +50,7 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		f.write(self.data)
 		f.close()
 		
-		self.cartype = commands.getoutput("./process -f type -n 1 %s" % file_name)
+		self.cartype = commands.getoutput("/home/ubuntu/process -f type -n 1 %s" % file_name)
 		#print "cartype: %s" % self.cartype
 		
 		try:
