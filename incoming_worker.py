@@ -5,68 +5,34 @@ from calculated_db import db as _db
 import os, time, socket
 import urllib2
 import boto.ec2
-
-
-user = os.environ['LTU_USER']
-
-FRONTEND_INCOMING = '12_LP1_SQS_D7001D_FRONTEND_INCOMING_%s' % user
-FRONTEND_OUTGOING = '12_LP1_SQS_D7001D_FRONTEND_OUTGOING_%s' % user
+from settings import * # Global variables
 
 logger = logging.getLogger('handleRequest')
 handler = logging.FileHandler('/tmp/handleRequest.log')
 logger.addHandler(handler) 
 logger.setLevel(logging.INFO)
 
-INTERVALL = 30
-#PRE_SLEEP_SHUTDOWN_TIME = 120
-
 #http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html
-AMAZON_META_DATA_URL = "http://169.254.169.254/latest/meta-data/public-ipv4" # amazon public ip.
-INSTANCE_ID_URL = "http://169.254.169.254/latest/meta-data/instance-id"
+AMAZON_META_DATA_URL_INSTANCE_ID = "http://169.254.169.254/latest/meta-data/instance-id"
 
 public_ip = ""
 ip_checked = False
 results = "/tmp/results/"
-FRONTEND_ELB = 'FRONTENDelbgroup2'
 
 conn = None
 dns = None
-
-''' using elb -- getdns() function
-def public_ip():
-	try:
-		if public_ip:
-			if ip_checked:
-				return public_ip
-			try:
-		    	socket.inet_aton(public_ip)
-		    	ip_checked = True
-				# legal ipv4 address
-				return public_ip
-			except socket.error:
-				# Not legal
-				pass		
-
-		f = urllib2.urlopen(AMAZON_META_DATA_URL)
-		public_ip = f.read()
-	except Exception, e:
-		pass
-	return public_ip
-'''
 
 def handleRequest(xmltext):
 	print "TODO: Handle request", xmltext
 	logger.info("TODO: Handle request")
 	return (1, xmltext)
 
-
-
 def getdns():
-	try:			
-		if conn is None:
-			conn = boto.ec2.connect_to_region('eu-west-1')
+	try:
 		if dns is not None:
 			return dns
+		if conn is None:
+			conn = boto.ec2.connect_to_region('eu-west-1')
 		for e in conn.get_all_load_balancers(load_balancer_names=FRONTEND_ELB):
 			dns = e.dns_name
 			return dns
@@ -98,9 +64,7 @@ while True:
 		xmltext = m.get_body()
 		if xmltext == "STOPINSTANCE": # Special case
 			
-			#time.sleep(PRE_SLEEP_SHUTDOWN_TIME)
-			
-			f = urllib2.urlopen(INSTANCE_ID_URL)
+			f = urllib2.urlopen(AMAZON_META_DATA_URL_INSTANCE_ID)
 			instance_id = f.read()
 
 			conn = boto.ec2.connect_to_region('eu-west-1')
@@ -126,12 +90,6 @@ while True:
 			db = _db()
 
 		db.write(requestID, result)
-		
-		''' old style
-		f = open(results+requestID+".xml","a+b")
-		f.write(result)
-		f.close()
-		'''
 
 		logger.info("Result written %s" % xmltext)
 

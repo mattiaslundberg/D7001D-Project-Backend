@@ -5,18 +5,13 @@ import boto
 import boto.ec2
 from awssqs import awssqs
 
-GUI_AMI_WORKER = ''
-GUI_AMI_MASTER = '' # TODO CHANGE!
+
+
+from settings import * # Global variables
+
 SQS_LIMIT_LOW = 2
 SQS_LIMIT_HIGH = 5
 NUM_INSTANCES = 0
-INTERVALL = 60
-TOKEN_TIME = INTERVALL*4
-
-user = os.environ['LTU_USER']
-FRONTEND_INCOMING = '12_LP1_SQS_D7001D_FRONTEND_INCOMING_%s' % user
-MASTER_TOKEN = "12_LP1_SQS_D7001D_FRONTEND_MASTER_%s" % user
-
 
 logger = logging.getLogger('SQSMASTER')
 handler = logging.FileHandler('/tmp/SQSMASTER.log')

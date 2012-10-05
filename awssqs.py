@@ -1,6 +1,6 @@
 from boto.sqs.connection import SQSConnection
 from boto.sqs.message import Message
-import boto.sqs # Needed for boto.sqs.regions()
+import boto.sqs
 import time
 
 class awssqs:
