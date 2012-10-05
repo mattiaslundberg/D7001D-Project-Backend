@@ -32,7 +32,7 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		self.size = self.request.recv(32, socket.MSG_WAITALL)
 		self.data = self.request.recv(int(self.size), socket.MSG_WAITALL)
 		
-		
+		"""
 		# DEBUG
 		print "recived data"
 		print "cell %d" % int(self.cell)
@@ -40,7 +40,7 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		print "side %d" % int(self.side)
 		print "timestamp %d" % int(self.timestamp)
 		print "size %d" % int(self.size)
-		
+		"""
 		
 		file_name = '/tmp/read-file-%s' % threading.current_thread().ident
 		f = open(file_name, 'w')
@@ -48,7 +48,7 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		f.close()
 		
 		self.cartype = commands.getoutput("./process -f type -n 1 %s" % file_name)
-		print "cartype: %s" % self.cartype
+		#print "cartype: %s" % self.cartype
 		
 		try:
 			self.db.save_packet(int(self.cell), int(self.node), int(self.side), int(self.timestamp), int(self.cartype), self.data)

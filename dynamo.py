@@ -1,6 +1,7 @@
 import boto
 import time
 import os
+import base64
 from boto.dynamodb.condition import *
 
 user = os.environ['LTU_USER']
@@ -24,14 +25,14 @@ class db:
 		)
 		ret = []
 		for item in items:
-			ret.append({'data':item['data'], 'timestamp':item['timestamp']})
+			ret.append({'data':base64.b64decode(item['data']), 'timestamp':item['timestamp']})
 		return ret
 	
 	def save_packet(self, cell, node, side, timestamp, cartype, data):
 		attr = {
 			'cartype':cartype,
 			'side':side,
-			'data':data,
+			'data':base64.b64encode(data),
 			'timestamp':timestamp,
 		}
 		
