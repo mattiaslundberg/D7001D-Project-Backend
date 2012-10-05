@@ -110,6 +110,12 @@ def reqType(level):
     data=dicti[res]
     return one_line(res,data,level)
 
+def clearData():
+    dicti = {}
+    data = []
+    key = 'NOKEY'
+    return
+
 ######## generates complete xml files (letters = level of tabbing) ##########
 
 def XML_XMLError():
@@ -232,6 +238,11 @@ def processData(cartype,libList):
     if not res_working:
         print 'error while processing'
         #throw exception!
+        
+    #clean temp directory from files
+    files=filesList.split()
+    for f in files:
+        os.remove(f)
     
     return carType, res_min, res_max, res_average #tuple - to be added to result list
 
@@ -241,21 +252,32 @@ def processData(cartype,libList):
 ###################################################
 
 def parse(xml_string):      #uncomment when running for real
+    clearData()
     p = xml.parsers.expat.ParserCreate()
 
     p.StartElementHandler = start_element
     p.EndElementHandler = end_element
     p.CharacterDataHandler = char_data
 
-    if testing:
-        f = file("./parser_test/RequestIDXXXXXXX.XML","r")
-        try:
-            p.Parse(f.read())
+##    if testing:
+##        f = file("./parser_test/RequestIDXXXXXXX.XML","r")
+##        try:
+##            p.Parse(f.read())
+##
+##        except xml.parsers.expat.ExpatError:
+##            return XML_XMLError(),dicti['RequestID']
+##    else:
+   
+    try:
+           p.Parse( p.parse(xml_string))
 
-        except xml.parsers.expat.ExpatError:
-            return XML_XMLError()
-    else:
-        p.parse(xml_string)
+    except xml.parsers.expat.ExpatError:
+           return XML_XMLError(),dicti['RequestID']
+    except AttributeError:
+           dicti['RequestID']=0
+           xmll = XML_XMLError()
+           #print xmll
+           return xmll,dicti['RequestID']
 
     #by now, all neccecary information should be stored in the dictionary named 'dicti'
     #print dicti,n()
@@ -263,9 +285,9 @@ def parse(xml_string):      #uncomment when running for real
 
     #check for faults in instructions
     if len(str(dicti["TimeStart"]))!=12:
-           return XML_StartTimeError()
+           return XML_StartTimeError(),dicti['RequestID']
     if len(str(dicti["TimeStop"]))!=12:
-           return XML_StartTimeError()
+           return XML_StartTimeError(),dicti['RequestID']
            
 
 
@@ -282,7 +304,7 @@ def parse(xml_string):      #uncomment when running for real
         #print XML_ListCells(cells)
         #error message cases
         
-        return XML_ListCells(cells)
+        return XML_ListCells(cells),dicti['RequestID']
 
     if requestType == 'CellStatSpeed':#¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
         libList = ''
@@ -322,15 +344,17 @@ def parse(xml_string):      #uncomment when running for real
             
             cartype = 1
             while cartype<12:
-                #                              0/1   1-11   start=0, end=4294967296
-                try:
-                    libList = d.load_packets(cellID, side, cartype, start, end)
+                #                          0/1   1-11   start=0, end=4294967296
+                
+                cells = d.load_cells()
+                if cellID not in cells:
+                     return XML_CellIDError()
+                    
+                libList = d.load_packets(cellID, side, cartype, start, end)
                     #process
-                    if libList: #if list is not empty
-                        tuplee = processData(cartype,libList)
-                        rawListCellID_1.append(tuplee)
-                except CellIDNotFoundError: #other required errors: StartTime, EndTime
-                    print XML_CellIDError()
+                if libList: #if list is not empty
+                    tuplee = processData(cartype,libList)
+                    rawListCellID_1.append(tuplee)
                 cartype = cartype-1
                     
         #error message cases
@@ -340,7 +364,7 @@ def parse(xml_string):      #uncomment when running for real
         
         #return results...
         #print xmlText
-        return xmlText
+        return xmlText,dicti['RequestID']
 
     if requestType == 'CellStatNet':#¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
         #result
@@ -388,10 +412,10 @@ def parse(xml_string):      #uncomment when running for real
         xmlText=XML_CellStatNet(resultTuple)
         #return results
         print xmlText
-        return xmlText
+        return xmlText,dicti['RequestID']
 
 
-    return XML_XMLError()
+    return XML_XMLError(),dicti['RequestID']
 
 
 
