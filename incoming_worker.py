@@ -25,9 +25,7 @@ conn = None
 dns = None
 
 def handleRequest(xmltext):
-	return (xmltext,1)
-	#return parse(xmltext)
-	#return (xmltext,1) # return parse(xmltext)
+	return parse(xmltext)
 
 def getdns():
 	try:
