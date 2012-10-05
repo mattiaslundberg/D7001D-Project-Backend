@@ -48,17 +48,19 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		f.close()
 		
 		self.cartype = commands.getoutput("./process -f type -n 1 %s" % file_name)
-		#print "cartype: %s" % self.cartype
+		print "cartype: %s" % self.cartype
 		
 		try:
 			self.db.save_packet(int(self.cell), int(self.node), int(self.side), int(self.timestamp), int(self.cartype), self.data)
 			print "saved"
 		except ValueError, e:
-			print e
+			print 'ValueError %s' % e
+		except Exception, e:
+			print 'Exception %s' % e
  
 class ThreadingServer(ThreadingMixIn, SocketServer.TCPServer):
 	pass
 
 if __name__ == "__main__":
-	server = ThreadingServer(("localhost", 12345), WSNTCPHandler)
+	server = ThreadingServer(("0.0.0.0", 12345), WSNTCPHandler)
 	server.serve_forever()

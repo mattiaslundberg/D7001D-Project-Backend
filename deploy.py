@@ -152,7 +152,7 @@ class Connector():
 				if i.state == u'running':
 					print 'Instance: %s' % i.public_dns_name
 	
-	def start_wsn_interface(self):
+	def start_wsn(self):
 		# Launch a ELB with autoscaling
 		ports = [(12345, 12345, 'tcp')]
 		self.lb = self.elbconn.create_load_balancer(WSN_ELB, ['eu-west-1a'], ports)
@@ -228,7 +228,7 @@ class Connector():
 		self.cwconn.create_alarm(scale_down_alarm)
 		scale_down_alarm.enable_actions()
 	
-	def start_gui_interface(self):
+	def start_gui(self):
 		# SQS
 		self.qin = awssqs(FRONTEND_INCOMING, create = True)
 		self.qout = awssqs(FRONTEND_OUTGOING, create = True)
@@ -313,11 +313,24 @@ class Connector():
 			dimensions=alarm_dimensions)
 		self.cwconn.create_alarm(scale_down_alarm)
 		scale_down_alarm.enable_actions()
+	
+	def upload_code(self):
+		for r in self.conn.get_all_instances(filters={'tag-value':user}):
+			for i in r.instances:
+				if i.state == u'running':
+					print 'Deploying code to %s.' % i.public_dns_name
+					my_key="-i $HOME/.ssh/12_LP1_KEY_D7001D_%s.pem" % user
+					md="ssh -C -o StrictHostKeyChecking=no -Y $my_key ubuntu@%s" % i.public_dns_name
+					
+					print commands.getoutput('scp -o StrictHostKeyChecking=no %s * ubuntu@%s:~/' % (my_key, i.public_dns_name))
+					print commands.getoutput('%s sudo chmod +x *' % (md) )
 
 
 if __name__ == '__main__':
 	c = Connector()
-	c.start_wsn_interface()
-	c.start_gui_interface()
+	c.start_wsn()
+	c.start_gui()
 	time.sleep(30)
 	c.print_ip()
+	time.sleep(10)
+	c.upload_code()
