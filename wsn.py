@@ -4,8 +4,14 @@ import SocketServer
 import commands
 import socket
 import threading
+import logging
 from SocketServer import ThreadingMixIn
 from dynamo import db as _db
+
+logger = logging.getLogger('wsn')
+handler = logging.FileHandler('/tmp/wsn.log')
+logger.addHandler(handler) 
+logger.setLevel(logging.INFO)
 
 
 class WSNTCPHandler(SocketServer.BaseRequestHandler):
@@ -35,15 +41,15 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		except:
 			return # Test helth
 		
-		"""
+		
 		# DEBUG
-		print "recived data"
-		print "cell %d" % int(self.cell)
-		print "node %d" % int(self.node)
-		print "side %d" % int(self.side)
-		print "timestamp %d" % int(self.timestamp)
-		print "size %d" % int(self.size)
-		"""
+		logger.info("recived data")
+		logger.info("cell %d" % int(self.cell))
+		logger.info("node %d" % int(self.node))
+		logger.info("side %d" % int(self.side))
+		logger.info("timestamp %d" % int(self.timestamp))
+		logger.info("size %d" % int(self.size))
+		
 		
 		file_name = '/tmp/read-file-%s' % threading.current_thread().ident
 		f = open(file_name, 'w')
@@ -55,15 +61,16 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		
 		try:
 			self.db.save_packet(int(self.cell), int(self.node), int(self.side), int(self.timestamp), int(self.cartype), self.data)
-			print "saved"
+			logger.info("saved")
 		except ValueError, e:
-			print 'ValueError %s' % e
+			logger.info('ValueError %s' % e)
 		except Exception, e:
-			print 'Exception %s' % e
+			logger.info('Exception %s' % e)
  
 class ThreadingServer(ThreadingMixIn, SocketServer.TCPServer):
 	pass
 
 if __name__ == "__main__":
+	logger.info("started")
 	server = ThreadingServer(("0.0.0.0", 12345), WSNTCPHandler)
 	server.serve_forever()

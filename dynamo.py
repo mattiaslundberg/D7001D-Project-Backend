@@ -25,13 +25,11 @@ class db:
 		)
 		ret = []
 		for item in items:
-			ret.append({'data':base64.b64decode(item['data']), 'timestamp':item['timestamp']})
+			ret.append({'data':base64.b64decode(item['data']), 'timestamp':(item['timestamp_node'] >> 32)})
 		return ret
 	
 	def save_packet(self, cell, node, side, timestamp, cartype, data):
 		attr = {
-			'cartype':cartype,
-			'side':side,
 			'data':base64.b64encode(data),
 			'timestamp':timestamp,
 		}
