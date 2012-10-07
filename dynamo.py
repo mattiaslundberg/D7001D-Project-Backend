@@ -31,7 +31,6 @@ class db:
 	def save_packet(self, cell, node, side, timestamp, cartype, data):
 		attr = {
 			'data':base64.b64encode(data),
-			'timestamp':timestamp,
 		}
 		
 		item = self.table.new_item(
