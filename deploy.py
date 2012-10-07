@@ -3,6 +3,7 @@
 import os
 import boto
 import boto.ec2
+import boto.dynamodb
 import time
 import commands
 from boto.ec2.elb import HealthCheck
@@ -96,6 +97,25 @@ class Connector():
 			self.cwconn.delete_alarms([FRONTEND_SCALE_DOWN, FRONTEND_SCALE_UP])
 		except Exception, e:
 			print e
+	
+	def stop_db(self):
+		dbconn = boto.dynamodb.connect_to_region('eu-west-1')
+		try:
+			tb = dbconn.get_table('12_LP1_DATA_D7001D_%s' % user)
+			tb.delete()
+		except Exception, e:
+			print e
+		try:
+			tb = dbconn.get_table('12_LP1_CELLS_D7001D_%s' % user)
+			tb.delete()
+		except Exception, e:
+			print e
+		try:
+			tb= dbconn.get_table('12_LP1_CALC_D7001D_%s' % user)
+			tb.delete()
+		except Exception, e:
+			print e
+		
 	
 	def stop_all(self):
 		self.stop_instances()
