@@ -160,7 +160,7 @@ class Connector():
 		# Settings for launched instances
 		self.lc = LaunchConfiguration(name=WSN_LC, image_id=WSN_AMI,
 				key_name='12_LP1_KEY_D7001D_%s' % user,
-				instance_type='t1.micro',
+				instance_type='m1.medium',
 				security_groups=['12_LP1_SEC_D7001D_%s' % user])
 		self.sconn.create_launch_configuration(self.lc)
 		
@@ -319,8 +319,8 @@ class Connector():
 if __name__ == '__main__':
 	c = Connector()
 	c.start_wsn()
-	c.start_gui()
+	#c.start_gui()
 	time.sleep(30)
 	c.print_ip()
-	time.sleep(10)
-	c.upload_code()
+	#time.sleep(10)
+	#c.upload_code()
