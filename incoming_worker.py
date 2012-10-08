@@ -33,7 +33,7 @@ def getdns():
 			return dns
 		if conn is None:
 			conn = boto.ec2.connect_to_region('eu-west-1')
-		for e in conn.get_all_load_balancers(load_balancer_names=FRONTEND_ELB):
+		for e in conn.get_all_load_balancers(load_balancer_names = FRONTEND_ELB):
 			dns = e.dns_name
 			return dns
 	except Exception, e:

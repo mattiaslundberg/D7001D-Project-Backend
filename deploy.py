@@ -123,16 +123,30 @@ class Connector():
 		self.stop_gui()
 
 		self.conn.close()
+
+	def stop_instance(instance):
+		if instance.state == u'running':
+			instance.stop()
+		instance.add_tag('Name', 'delete-me_%s' % user)
+		instance.add_tag('action', 'delete')
+
 	
-	def stop_instances(self):
+	def stop_instances(self, instance = None):
 		# Stop all of my running instances and mark for deletion
 		for r in self.conn.get_all_instances(filters={'tag-value':user}):
 			for i in r.instances:
-				if i.state == u'running':
-					i.stop()
-				i.add_tag('Name', 'delete-me_%s' % user)
-				i.add_tag('action', 'delete')
+				stop_instance(i)
 	
+	def get_instances(input_filter={}):
+		ip = []
+		for r in self.conn.get_all_instances(filters=dict({'tag-value':user}.items() + input_filter.items())):
+			for i in r.instances:
+				if i.state == u'running':
+					ip.append(i)
+		return ip
+
+
+
 	def print_ip(self):
 		# Print IP:s I might need
 		for e in self.elbconn.get_all_load_balancers():
@@ -226,7 +240,7 @@ class Connector():
 		self.qtoken = awssqs(MASTER_TOKEN, create = True, visibility_timeout = TOKEN_TIME)
 		self.qtoken.write("token")
 
-		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='t1.micro')
+		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
 
 		# ELB with autoscale
 		ports = [(80, 80, 'http')]
