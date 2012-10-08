@@ -136,7 +136,8 @@ class Connector():
 	def print_ip(self):
 		# Print IP:s I might need
 		for e in self.elbconn.get_all_load_balancers():
-			print 'ELB: %s' % e.dns_name
+			if 'group2' in e.dns_name:
+				print 'ELB: %s' % e.dns_name
 		for r in self.conn.get_all_instances(filters={'tag-value':user}):
 			for i in r.instances:
 				if i.state == u'running':
