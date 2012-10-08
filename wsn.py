@@ -11,7 +11,7 @@ from dynamo import db as _db
 
 logger = logging.getLogger('wsn')
 handler = logging.FileHandler('/tmp/wsn.log')
-logger.addHandler(handler) 
+logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 
@@ -44,11 +44,19 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		self.side = data[2]
 		self.timestamp = data[3]
 		self.size = data[4]
+		
 		try:
-			self.data = self.request.recv(self.size)
+			raw = self.request.recv(self.size)
+			while len(raw) < self.size:
+				tmp = self.request.recv(1)
+				if not tmp:
+					break
+				raw += tmp
 		except:
 			logger.info('Health check')
-			return # trying
+			return
+		
+		self.data = raw
 		
 		# DEBUG
 		logger.info("recived data")
