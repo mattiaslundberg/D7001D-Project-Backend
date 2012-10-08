@@ -5,7 +5,7 @@ sys.path.append("..")
 from awssqs import awssqs
 from settings import * # Global variables
 
-q = awssqs(FRONTEND_OUTGOING, create = False)
+q = awssqs(FRONTEND_OUTGOING)
 
 while True:
 	try:

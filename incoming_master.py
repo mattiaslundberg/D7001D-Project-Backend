@@ -45,9 +45,9 @@ c = 0
 
 def getQ():
 	if qtoken is None:
-		qtoken = awssqs(MASTER_TOKEN, create = False)
+		qtoken = awssqs(MASTER_TOKEN)
 	if qin is None:
-		qin = awssqs(FRONTEND_INCOMING, create = False)
+		qin = awssqs(FRONTEND_INCOMING)
 
 
 while True:

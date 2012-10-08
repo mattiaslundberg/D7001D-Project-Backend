@@ -4,15 +4,10 @@ import boto.sqs
 import time
 
 class awssqs:
-	def __init__(self, name, create = False, visibility_timeout = 60):
+	def __init__(self, name, visibility_timeout = 60):
 		self.visibility_timeout = visibility_timeout
 		self.conn = SQSConnection(region=boto.sqs.regions()[1]) # eu-west1
-		# Forcing create = True
-		create = True
-		if create:
-			self.q = self.conn.create_queue(name)
-		else:
-			self.q = self.conn.get_queue(name)
+		self.q = self.conn.create_queue(name)
 		
 		if self.q is None:
 			raise Exception("Could not get that queue " + name)
