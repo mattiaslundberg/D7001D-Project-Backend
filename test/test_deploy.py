@@ -4,6 +4,6 @@ sys.path.append("..")
 from deploy import Connector
 
 c = Connector()
-c.start_gui_interface()
+c.start_gui()
 c.stop_instances()
-c.stop_gui()
+#c.stop_gui()
