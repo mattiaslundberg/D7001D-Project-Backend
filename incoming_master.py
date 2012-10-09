@@ -14,6 +14,8 @@ socket.setdefaulttimeout(TIMEOUT)
 
 SQS_LIMIT_LOW = 2
 SQS_LIMIT_HIGH = 5
+MIN_WORKERS = 1
+MAX_WORKERS = 4
 
 logger = logging.getLogger('SQSMASTER')
 handler = logging.FileHandler('/tmp/SQSMASTER.log')
@@ -79,19 +81,19 @@ while True:
 			time.sleep(TOKEN_TIME - (time.time() - t) - 10) # 10 seconds to actual do the start/stoping of workers
 
 			num_good_workers = len([ instance for k, (instance, status) in result.iteritems() if status == 'OK' ])
-			bad_workers = [ instance for k, (instance, status) in result.iteritems() if status == 'BAD' ] # TODO maybe turn off?
+			bad_workers = [ instance for k, (instance, status) in result.iteritems() if status == 'BAD' ]
 
 			for bad_worker in bad_workers:
 				connector.stop_instance(bad_worker)
 
 			qIn_len = qin.length()
-			if qIn_len >= num_good_workers * SQS_LIMIT_HIGH:
+			if qIn_len >= num_good_workers * SQS_LIMIT_HIGH and nun_good_workers < MAX_WORKERS:
 				# Launch instances
 				logger.info("Creating instances")
 				connector.launch_instances(ami = GUI_AMI_WORKER, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
 				logger.info("Instance launched")
 				
-			elif qIn_len < num_good_workers * SQS_LIMIT_LOW:
+			elif qIn_len < num_good_workers * SQS_LIMIT_LOW and num_good_workers > MIN_WORKERS:
 				logger.info("Decreasing instances")
 
 				# Remove instances by sending a message
@@ -115,4 +117,3 @@ while True:
 		logger.error('Exception %s' % e)
 	
 	time.sleep(INTERVALL)
-
