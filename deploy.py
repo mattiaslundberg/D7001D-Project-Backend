@@ -138,14 +138,12 @@ class Connector():
 				stop_instance(i)
 	
 	def get_instances(input_filter={}):
-		ip = []
+		instances = []
 		for r in self.conn.get_all_instances(filters=dict({'tag-value':user}.items() + input_filter.items())):
 			for i in r.instances:
 				if i.state == u'running':
-					ip.append(i)
-		return ip
-
-
+					instances.append(i)
+		return instances
 
 	def print_ip(self):
 		# Print IP:s I might need

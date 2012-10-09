@@ -72,7 +72,7 @@ while True:
 		m = qtoken.read()
 		t = time.time()
 		if m is None: # Someone else got token.
-			c = 0 
+			c = 0
 		else:
 			tokentext = m.get_body()
 
