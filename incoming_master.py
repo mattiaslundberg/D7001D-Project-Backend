@@ -55,7 +55,9 @@ def tryInstance(instance):
 				success = tries >= 3
 
 			result[addr] = (instance, status)
-		except:
+		except Exception, e:
+			info('Exception %s' % e)
+			logger.error('Exception %s' % e)
 			time.sleep(10)
 
 
@@ -66,6 +68,10 @@ def active_workers():
 		t = Thread(target=tryInstance, args=(instance,))
         t.start()
 
+def info(text):
+	logger.info(text)
+	print text
+
 while True:
 	try:
 		getQ()
@@ -73,6 +79,7 @@ while True:
 		t = time.time()
 		if m is None: # Someone else got token.
 			c = 0
+			info("Someone else got token")
 		else:
 			tokentext = m.get_body()
 
@@ -84,17 +91,18 @@ while True:
 			bad_workers = [ instance for k, (instance, status) in result.iteritems() if status == 'BAD' ]
 
 			for bad_worker in bad_workers:
+				info("stop worker %s" % bad_worker.public_dns_name)
 				connector.stop_instance(bad_worker)
 
 			qIn_len = qin.length()
-			if qIn_len >= num_good_workers * SQS_LIMIT_HIGH and nun_good_workers < MAX_WORKERS:
+			if qIn_len >= num_good_workers * SQS_LIMIT_HIGH and num_good_workers < MAX_WORKERS:
 				# Launch instances
-				logger.info("Creating instances")
+				info("Creating instances")
 				connector.launch_instances(ami = GUI_AMI_WORKER, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
-				logger.info("Instance launched")
+				info("Instance launched")
 				
 			elif qIn_len < num_good_workers * SQS_LIMIT_LOW and num_good_workers > MIN_WORKERS:
-				logger.info("Decreasing instances")
+				info("Decreasing instances")
 
 				# Remove instances by sending a message
 				# Meaning that we do not interrupt one.. 
@@ -107,12 +115,13 @@ while True:
 			if c != 0:
 				# In total we wait TOKEN_TIME + INTERVALL * 1.5  - 10(in worst case)
 				# 0.5*INTERVALL to avoid race condition if they happend to be in sync in the first time
-				time.sleep(int(INTERVALL*0.5))
+				time.sleep(INTERVALL*0.5)
 
 			c +=1
 
 
 	except Exception, e:
+		info('Exception %s' % e)
 		# Always log exceptions
 		logger.error('Exception %s' % e)
 	

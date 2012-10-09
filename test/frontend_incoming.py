@@ -9,16 +9,11 @@ from awssqs import awssqs
 inxmltext = file("../parser_test/RequestIDXXXXXXX.XML","r").read()
 inxmltext2 = file("../parser_test/RequestIDCellStatSpeed.XML","r").read()
 
-create = False
-q = awssqs(FRONTEND_INCOMING, create = create)
-#t = awssqs(FRONTEND_OUTGOING, create = True)
+q = awssqs(FRONTEND_INCOMING)
 q.write(inxmltext)
+print inxmltext
+q.write(inxmltext2)
+print inxmltext2
 
 #time.sleep(60)
-
-if create:
-	#q.deleteQueue()
-	pass
-
-print inxmltext
-print parse(inxmltext2)
+#q.deleteQueue()
