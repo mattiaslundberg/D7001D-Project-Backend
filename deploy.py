@@ -124,7 +124,7 @@ class Connector():
 
 		self.conn.close()
 
-	def stop_instance(instance):
+	def stop_instance(self, instance):
 		if instance.state == u'running':
 			instance.stop()
 		instance.add_tag('Name', 'delete-me_%s' % user)
@@ -135,7 +135,7 @@ class Connector():
 		# Stop all of my running instances and mark for deletion
 		for r in self.conn.get_all_instances(filters={'tag-value':user}):
 			for i in r.instances:
-				stop_instance(i)
+				self.stop_instance(i)
 	
 	def get_instances(input_filter={}):
 		instances = []
