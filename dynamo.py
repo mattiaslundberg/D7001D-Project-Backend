@@ -5,6 +5,11 @@ import base64
 from settings import user
 from exceptions import CellNotFoundError
 
+logger = logging.getLogger('db_data')
+handler = logging.FileHandler('/tmp/db_data.log')
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
 class db:
 	def __init__(self):
 		self.conn = boto.dynamodb.connect_to_region('eu-west-1')
@@ -15,9 +20,10 @@ class db:
 		if not '12_LP1_CELLS_D7001D_%s' % user in self.conn.list_tables():
 			self.create_slave()
 		self.cells = self.conn.get_table('12_LP1_CELLS_D7001D_%s' % user)
-		print 'Created database'
+		logger.info('Inited databases')
 	
 	def load_packets(self, cell, side, cartype, start=0, end=2**64):
+		logger.info('loading packet cell=%s side=%s car=%s interval=%s-%s',cell,side,cartype,start,end)
 		if not cell in load_cells():
 			raise CellNotFoundError()
 		items = self.table.query(
@@ -30,6 +36,7 @@ class db:
 		return ret
 	
 	def save_packet(self, cell, node, side, timestamp, cartype, data):
+		logger.info('saving packet  cell=%s node=%s side=%s time=%s car=%s',cell,node,side,timestamp,cartype)
 		attr = {
 			'data':base64.b64encode(data),
 		}
