@@ -28,6 +28,14 @@ class Connector():
 		self.cwconn = boto.connect_cloudwatch(region=boto.ec2.cloudwatch.regions()[2])
 		self.sconn = AutoScaleConnection(region=boto.ec2.autoscale.regions()[2])
 	
+	def create_ami(self,instance_id,name,tags={}):
+		_id = self.conn.create_image(instance_id, '12_LP1_AMI_D7001D_GROUP2_%s')
+		tags = dict(tags.items() + {'user':user, 'course':'D7001D'}.items() )
+		self.conn.create_tags(_id, tags)
+		print 'AMI id = %s' % _id
+		time.sleep(30)
+		self.launch_instances(_id, extra_tags=tags)
+	
 	def launch_instances(self, ami, num=1, extra_tags = {}, instance_type = "m1.small"):
 		# Launch one or more EC2 instances from AMI
 		self.res = self.conn.run_instances(
