@@ -9,6 +9,6 @@ myid = 2
 db.write(myid,msg)
 #time.sleep(120)
 loaded_msg = db.read(myid)
-assert loaded_msg == msg, "What we put in is not the same as we got out"+loaded_msg
+assert loaded_msg == msg, "put = %s and got = %s" % (msg, loaded_msg)
 print "test ok"
 
