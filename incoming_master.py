@@ -130,7 +130,7 @@ class master:
 						# else we could just pick a instance from the list with good workers and stop directly
 						self.qin.write("STOPINSTANCE") 
 
-					if self.c >= 3: # We give up waiting and considering it dead
+					if self.c >= 2: # We give up waiting and considering it dead after 3 tries
 						info("Starting another MASTER")
 						self.AMI_ID()
 						self.connector.launch_instances(ami = self.ami_id, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
