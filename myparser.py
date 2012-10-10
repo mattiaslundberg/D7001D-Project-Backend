@@ -345,35 +345,20 @@ def parse(xml_string):	  #uncomment when running for real
 			#if cellID not in cells:
 			#	return XML_CellIDError()
 			
-			####cell side A
-			side=0
-			
-			for cartype in xrange(1,12):
-				#libList = d.load_packets(int(cellID), int(side), int(cartype), int(dateToMs(start)), int(dateToMs(end)))
-				libList = d.load_packets(int(cellID), int(side), int(cartype), 0, 2**64)
-					#process
-				if libList: #if list is not empty
-					print 'processing data...'
-					tuplee = processData(cartype,libList)
-					rawListCellID_0.append(tuplee)
+			for side in xrange(0,1):
+
+				for cartype in xrange(1,12):
+					#libList = d.load_packets(int(cellID), int(side), int(cartype), int(dateToMs(start)), int(dateToMs(end)))
+					libList = d.load_packets(int(cellID), int(side), int(cartype), 0, 2**64)
+						#process
+					if libList: #if list is not empty
+						print 'processing data...'
+						tuplee = processData(cartype,libList)
+						rawListCellID_0.append(tuplee)
+					
+					else:
+						print 'list length: '+str(len(libList))
 				
-				else:
-					print 'list length: '+str(len(libList))
-				
-			####cell side B
-			side=1
-			
-			for cartype in xrange(1,12):
-				#libList = d.load_packets(int(cellID), int(side), int(cartype), int(dateToMs(start)), int(dateToMs(end)))
-				libList = d.load_packets(int(cellID), int(side), int(cartype), 0, 2**64)
-					#process
-				if libList: #if list is not empty
-					print 'processing data...'
-					tuplee = processData(cartype,libList)
-					rawListCellID_1.append(tuplee)
-				
-				else:
-					print 'list length: '+str(len(libList))
 				
 		#error message cases
 		
