@@ -137,7 +137,7 @@ class Connector():
 			for i in r.instances:
 				self.stop_instance(i)
 	
-	def get_instances(input_filter={}):
+	def get_instances(self, input_filter={}):
 		instances = []
 		for r in self.conn.get_all_instances(filters=dict({'tag-value':user}.items() + input_filter.items())):
 			for i in r.instances:
@@ -235,7 +235,7 @@ class Connector():
 		# SQS
 		self.qin = awssqs(FRONTEND_INCOMING, create = True)
 		self.qout = awssqs(FRONTEND_OUTGOING, create = True)
-		self.qtoken = awssqs(MASTER_TOKEN, create = True, visibility_timeout = TOKEN_TIME)
+		self.qtoken = awssqs(MASTER_TOKEN, visibility_timeout = TOKEN_TIME)
 		self.qtoken.write("token")
 
 		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
