@@ -1,9 +1,9 @@
 # -*- coding: cp1252 -*-
 import xml.parsers.expat
 from subprocess import call
+from dynamo import db as _db
 import threading
 import commands
-import dynamo
 import datetime
 import time
 import os
@@ -207,21 +207,22 @@ def XML_CellStatNet(resultTuple):
 
 ######################## function for processing data ############################
 def processData(carType,libList):
-		#process data
-	
-	
+	#process data
 	#save to files
 	count = 0
-	filesList = ''
+	filelist = ''
+	folder = '/tmp/%s/' % threading.current_thread().ident
+	if not os.path.exists(folder):
+		os.mkdir(folder)
 	for pkt in libList:
 		count = count + 1
 		if not testing:
-			path='/tmp/%s/%s' % (threading.current_thread().ident, count)
+			path = '%s%s' % (folder, count)
 			f_pkt = open(path,'w')
 			
 			f_pkt.write(pkt['data'])
 			f_pkt.close()
-			filesList += path + ' '
+			filelist += path + ' '
 	
 	#run command
 	result = '' #result-list
@@ -239,16 +240,15 @@ def processData(carType,libList):
 		print 'process result: '+result
 	#handle process result
 	res = result.split()
-	res_working = bool(res[0]==0) #True if all is OK
 	res_min = res[1] #0-200
 	res_max = res[2] #0-200
 	res_average = res[3] #0-200
-	if not res_working:
+	if not res[0]:
 		print 'error while processing: code '+res[0]
 		#throw exception!
 		
 	#clean temp directory from files
-	files=filesList.split()
+	files=filelist.split()
 	for f in files:
 		os.remove(f)
 	
@@ -317,7 +317,7 @@ def parse(xml_string):	  #uncomment when running for real
 		if testing:
 			cells=[1,2,534,45,867,67]
 		else:
-			d = dynamo.db()
+			d = _db()
 			cells = d.load_cells()
 
 		
@@ -336,7 +336,7 @@ def parse(xml_string):	  #uncomment when running for real
 			rawListCellID_0 = [(1,71,121,101),(2,72,122,102),(3,73,123,103),(4,74,124,104)]
 			rawListCellID_1 = [(6,76,126,106),(7,77,127,107),(8,78,128,108),(9,79,129,109)]
 		else:
-			d = dynamo.db()
+			d = _db()
 			cellID = dicti['CellID']
 			start = dicti['TimeStart']
 			end = dicti['TimeStop']
@@ -348,9 +348,7 @@ def parse(xml_string):	  #uncomment when running for real
 			####cell side A
 			side=0
 			
-			
-			cartype = 1
-			while cartype<12:
+			for cartype in xrange(1,12):
 				#libList = d.load_packets(int(cellID), int(side), int(cartype), int(dateToMs(start)), int(dateToMs(end)))
 				libList = d.load_packets(int(cellID), int(side), int(cartype), 0, 2**64)
 					#process
@@ -361,14 +359,11 @@ def parse(xml_string):	  #uncomment when running for real
 				
 				else:
 					print 'list length: '+str(len(libList))
-				cartype = cartype+1
 				
 			####cell side B
 			side=1
 			
-			
-			cartype = 1
-			while cartype<12:
+			for cartype in xrange(1,12):
 				#libList = d.load_packets(int(cellID), int(side), int(cartype), int(dateToMs(start)), int(dateToMs(end)))
 				libList = d.load_packets(int(cellID), int(side), int(cartype), 0, 2**64)
 					#process
@@ -379,7 +374,6 @@ def parse(xml_string):	  #uncomment when running for real
 				
 				else:
 					print 'list length: '+str(len(libList))
-				cartype = cartype+1
 				
 		#error message cases
 		
@@ -399,7 +393,7 @@ def parse(xml_string):	  #uncomment when running for real
 		   resultTuple = (1,198708170000),(5,198708170001),7,10
 		   #libList = [{'data':'123,1231,123,213', 'timestamp':'12341234'},{'data':'123,123', 'timestamp':1234}]
 		else:
-			d = dynamo.db()
+			d = _db()
 			#dict
 			cellID = dicti['CellID']
 			start = dicti['TimeStart']
@@ -433,7 +427,7 @@ def parse(xml_string):	  #uncomment when running for real
 				carList.sort(key=lambda tup: tup[1]) #sort by timestamp
 
 				#TotalAmountOfData??
-				#don't bother right at all ;)...
+				#don't bother at all ;)...
 				totalAmtData = 99
 				
 				#get first and last of list

@@ -1,9 +1,12 @@
 import boto
+import boto.dynamodb
 import time
 import os
 import base64
+import logging
 from settings import user
-from exceptions import CellNotFoundError
+from exception import CellNotFoundError
+from boto.dynamodb.condition import *
 
 logger = logging.getLogger('db_data')
 handler = logging.FileHandler('/tmp/db_data.log')
@@ -24,7 +27,7 @@ class db:
 	
 	def load_packets(self, cell, side, cartype, start=0, end=2**64):
 		logger.info('loading packet cell=%s side=%s car=%s interval=%s-%s',cell,side,cartype,start,end)
-		if not cell in load_cells():
+		if not cell in self.load_cells():
 			raise CellNotFoundError()
 		items = self.table.query(
 			hash_key=(cell << 40) + (side << 32) + cartype,
