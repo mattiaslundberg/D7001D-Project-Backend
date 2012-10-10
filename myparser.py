@@ -2,6 +2,7 @@
 import xml.parsers.expat
 from subprocess import call
 from dynamo import db as _db
+from exception import CellNotFoundError
 import threading
 import commands
 import datetime
@@ -235,6 +236,7 @@ def processData(carType,libList):
 		call= "/home/ubuntu/process -f speed -n %s %s" % (count, filelist)  #'speed' command
 		print call
 		result = commands.getoutput(call)
+		#TODO: check if result contains 'permission denied' or 'not found'
 
 	if debug:
 		print 'process result: '+result
@@ -255,13 +257,18 @@ def processData(carType,libList):
 	return carType, res_min, res_max, res_average #tuple - to be added to result list
 
 
-def dateToMs(datestring):		  #datestring format:   '201210052359'
+def dateToMs(d):		  #datestring format:   '201210052359'
 	dt=datetime.datetime(int(d[0:4]),int(d[4:6]),int(d[6:8]),int(d[8:10]),int(d[10:12]),0,0)
-	time.mktime(dts.timetuple())
+	t = time.mktime(dt.timetuple())*1000
+	print t
+	return t
 
 def msToDate(ms):				  #ms format: float/long in ms
-	dt = datetime.datetime.fromtimestamp(ms)
-	return dt.strftime("%Y%m%d%H%M")
+	dt = datetime.datetime.fromtimestamp(ms/1000)
+	dtt = dt.strftime("%Y%m%d%H%M")
+	print dtt
+	return dtt
+	
 
 ###################################################
 ######## parse code starts running here  ##########
@@ -344,23 +351,24 @@ def parse(xml_string):	  #uncomment when running for real
 			#cells = d.load_cells()
 			#if cellID not in cells:
 			#	return XML_CellIDError()
-			
-			for side in xrange(0,1):
+			try:
+				for side in xrange(0,1):
 
-				for cartype in xrange(1,12):
-					#libList = d.load_packets(int(cellID), int(side), int(cartype), int(dateToMs(start)), int(dateToMs(end)))
-					libList = d.load_packets(int(cellID), int(side), int(cartype), 0, 2**64)
-						#process
-					if libList: #if list is not empty
-						print 'processing data...'
-						tuplee = processData(cartype,libList)
-						rawListCellID_0.append(tuplee)
-					
-					else:
-						print 'list length: '+str(len(libList))
-				
-				
-		#error message cases
+					for cartype in xrange(1,12):
+						libList = d.load_packets(int(cellID), int(side), int(cartype), int(dateToMs(start)), int(dateToMs(end)))
+						#libList = d.load_packets(int(cellID), int(side), int(cartype), 0, 2**64)
+							#process
+						if libList: #if list is not empty
+							print 'processing data...'
+							tuplee = processData(cartype,libList)
+							rawListCellID_0.append(tuplee)
+							
+						else:
+							print 'list length: '+str(len(libList))
+			
+			#error message cases
+			except CellNotFoundError:
+				return XML_CellIDError(), dicti['RequestID']
 		
 		#create xml
 		xmlText=XML_CellStatSpeed(rawListCellID_0,rawListCellID_1)
@@ -389,16 +397,22 @@ def parse(xml_string):	  #uncomment when running for real
 			#	return XML_CellIDError()
 			cartype = 1
 			while cartype<12:
-				#						 0/1   1-11   start=0, end=4294967296
-				libs=[]
-				libs.extend(d.load_packets(int(cellID), 0, int(cartype), int(dateToMs(start)), int(dateToMs(end)) )) #side 0
-				libs.extend(d.load_packets(int(cellID), 1, int(cartype), int(dateToMs(start)), int(dateToMs(end)) )) #side 1
+				try:
 				
-				for lib in libs: #adding cartype as key to each car's library
-					lib['cartype']=cartype
-				libList.extend(libs)
-	   
-				cartype = cartype+1
+					#						 0/1   1-11   start=0, end=4294967296
+					libs=[]
+					libs.extend(d.load_packets(int(cellID), 0, int(cartype), int(dateToMs(start)), int(dateToMs(end)) )) #side 0
+					libs.extend(d.load_packets(int(cellID), 1, int(cartype), int(dateToMs(start)), int(dateToMs(end)) )) #side 1
+
+					for lib in libs: #adding cartype as key to each car's library
+						lib['cartype']=cartype
+						
+					libList.extend(libs)
+					cartype = cartype+1
+					
+				except CellNotFoundError:
+					return XML_CellIDError(), dicti['RequestID']
+					
 		   
 			##create a list of tuples of the form (CarType,TimeStamp)
 			carList = []
