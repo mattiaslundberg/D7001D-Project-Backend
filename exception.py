@@ -1,0 +1,2 @@
+class CellNotFoundError(Exception):
+	pass

@@ -3,6 +3,7 @@ import time
 import os
 import base64
 from settings import user
+from exceptions import CellNotFoundError
 
 class db:
 	def __init__(self):
@@ -17,6 +18,8 @@ class db:
 		print 'Created database'
 	
 	def load_packets(self, cell, side, cartype, start=0, end=2**64):
+		if not cell in load_cells():
+			raise CellNotFoundError()
 		items = self.table.query(
 			hash_key=(cell << 40) + (side << 32) + cartype,
 			range_key_condition = BETWEEN((start << 32), (end << 32) + 2**32),

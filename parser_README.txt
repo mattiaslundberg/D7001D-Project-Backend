@@ -1,7 +1,7 @@
 
 Saker att fixa innan testkörning i Linux:
-- i processData(), sätta bra path att spara filerna (temp-folder?)
-- CellNotFoundError - detta exception behöver skapas av dynamo.db() så att man får reda på ifall cellen inte finns.
+- i processData(), sätta bra path att spara filerna (temp-folder?) # DONE
+- CellNotFoundError - detta exception behöver skapas av dynamo.db() så att man får reda på ifall cellen inte finns. # Done
 
 
 ---------------------------
