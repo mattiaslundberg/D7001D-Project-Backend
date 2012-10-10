@@ -180,10 +180,11 @@ def XML_CellStatSpeed(rawListCellID_0,rawListCellID_1):
 
 def XML_CellStatNet(resultTuple):
 	#fetch from resultTuple
+	print 'resultTuple: '+str(resultTuple)
 	carTypeFirst = (resultTuple[0])[0]
-	timestampFirst = dateToMs((resultTuple[0])[1])
+	timestampFirst = msToDate((resultTuple[0])[1])
 	carTypeLast = (resultTuple[1])[0]
-	timestampLast = dateToMs((resultTuple[1])[1])
+	timestampLast = msToDate((resultTuple[1])[1])
 	nrOfCars = resultTuple[2]
 	totalAmountOfData = resultTuple[3]
 
@@ -417,8 +418,8 @@ def parse(xml_string):	  #uncomment when running for real
 			##create a list of tuples of the form (CarType,TimeStamp)
 			carList = []
 			if libList!=[]:
-				if debug:
-					print 'libList=',libList
+#				if debug:
+#					print 'libList=',libList
 				for lib in libList:
 					ctype=lib['cartype']
 					tstamp=lib['timestamp']
@@ -427,7 +428,7 @@ def parse(xml_string):	  #uncomment when running for real
 
 				#TotalAmountOfData??
 				#don't bother at all ;)...
-				totalAmtData = 99
+				totalAmtData = 0
 				
 				#get first and last of list
 				resultTuple = carList[0],carList[-1],len(carList),totalAmtData
