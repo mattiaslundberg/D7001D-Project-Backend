@@ -10,6 +10,9 @@ class db:
 		if not '12_LP1_CALC_D7001D_%s' % user in self.conn.list_tables():
 			self.create_db()
 		self.table = self.conn.get_table('12_LP1_CALC_D7001D_%s' % user)
+		while self.table.status != 'ACTIVE':
+			time.sleep(5)
+			self.table.refresh()
 	
 	def read(self, _id):
 		item = self.table.get_item(hash_key=_id)
@@ -20,11 +23,11 @@ class db:
 	
 	def write(self, _id, data):
 		attr = {
-			'data':data,
+			'data':str(data),
 		}
 		
 		item = self.table.new_item(
-			hash_key=_id,
+			hash_key=int(_id),
 			attrs=attr
 		)
 		item.put()
@@ -35,13 +38,9 @@ class db:
 			hash_key_proto_value=int
 		)
 		
-		table = self.conn.create_table(
+		self.table = self.conn.create_table(
 			name='12_LP1_CALC_D7001D_%s' % user,
 			schema=schema,
 			read_units=10,
 			write_units=10
 		)
-		
-		while not '12_LP1_CALC_D7001D_%s' % user in self.conn.list_tables():
-			time.sleep(5)
-	

@@ -23,6 +23,11 @@ class db:
 		if not '12_LP1_CELLS_D7001D_%s' % user in self.conn.list_tables():
 			self.create_slave()
 		self.cells = self.conn.get_table('12_LP1_CELLS_D7001D_%s' % user)
+		
+		while self.table.status != 'ACTIVE' and self.cells.status != 'ACTIVE':
+			time.sleep(5)
+			self.table.refresh()
+			self.cells.refresh()
 		logger.info('Inited databases')
 	
 	def load_packets(self, cell, side, cartype, start=0, end=2**64):
@@ -83,9 +88,6 @@ class db:
 			read_units=10,
 			write_units=10
 		)
-		
-		while not '12_LP1_DATA_D7001D_%s' % user in self.conn.list_tables():
-			time.sleep(5)
 	
 	def create_slave(self):
 		schema = self.conn.create_schema(
@@ -101,6 +103,3 @@ class db:
 			read_units=10,
 			write_units=10
 		)
-		
-		while not '12_LP1_CELLS_D7001D_%s' % user in self.conn.list_tables():
-			time.sleep(5)
