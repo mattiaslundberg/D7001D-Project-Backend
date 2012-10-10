@@ -180,7 +180,7 @@ def XML_CellStatSpeed(rawListCellID_0,rawListCellID_1):
 
 def XML_CellStatNet(resultTuple):
 	#fetch from resultTuple
-	print 'resultTuple: '+str(resultTuple)
+	#print 'resultTuple: '+str(resultTuple)
 	carTypeFirst = (resultTuple[0])[0]
 	timestampFirst = msToDate((resultTuple[0])[1])
 	carTypeLast = (resultTuple[1])[0]
@@ -261,13 +261,11 @@ def processData(carType,libList):
 def dateToMs(d):		  #datestring format:   '201210052359'
 	dt=datetime.datetime(int(d[0:4]),int(d[4:6]),int(d[6:8]),int(d[8:10]),int(d[10:12]),0,0)
 	t = time.mktime(dt.timetuple())*1000
-	print t
 	return t
 
 def msToDate(ms):				  #ms format: float/long in ms
 	dt = datetime.datetime.fromtimestamp(ms/1000)
 	dtt = dt.strftime("%Y%m%d%H%M")
-	print dtt
 	return dtt
 	
 
@@ -315,7 +313,7 @@ def parse(xml_string):	  #uncomment when running for real
 	if len(str(dicti["TimeStart"]))!=12:
 			return XML_StartTimeError(),dicti['RequestID']
 	if len(str(dicti["TimeStop"]))!=12:
-			return XML_StartTimeError(),dicti['RequestID']
+			return XML_StopTimeError(),dicti['RequestID']
 
 
 
@@ -327,10 +325,6 @@ def parse(xml_string):	  #uncomment when running for real
 		else:
 			d = _db()
 			cells = d.load_cells()
-
-		
-		#print XML_ListCells(cells)
-		#error message cases
 		
 		return XML_ListCells(cells),dicti['RequestID']
 
