@@ -29,10 +29,12 @@ class Connector():
 		self.sconn = AutoScaleConnection(region=boto.ec2.autoscale.regions()[2])
 	
 	def create_ami(self,instance_id,name,tags={}):
-		_id = self.conn.create_image(instance_id, '12_LP1_AMI_D7001D_GROUP2_%s')
-		tags = dict(tags.items() + {'user':user, 'course':'D7001D'}.items() )
-		self.conn.create_tags(_id, tags)
+		_id = self.conn.create_image(instance_id, '12_LP1_AMI_D7001D_GROUP2_%s' % name)
+		time.sleep(5)
 		print 'AMI id = %s' % _id
+		tags = dict(tags.items() + {'user':user, 'course':'D7001D', 'Name':'12_LP1_AMI_D7001D_GROUP2_%s' % name}.items() )
+		print tags
+		self.conn.create_tags([_id], tags)
 		time.sleep(30)
 		self.launch_instances(_id, extra_tags=tags)
 	
