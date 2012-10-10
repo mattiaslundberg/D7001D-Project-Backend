@@ -22,12 +22,15 @@ handler = logging.FileHandler('/tmp/in_master.log')
 logger.addHandler(handler) 
 logger.setLevel(logging.INFO)
 
+#http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html
+AMAZON_META_DATA_URL_AMI_ID = "http://169.254.169.254/latest/meta-data/ami-id"
 
 class master:
 
 	qtoken = None
 	qin = None
 	connector = None
+	ami_id = None
 	c = 0
 	result = {}
 
@@ -47,7 +50,7 @@ class master:
 		addr = instance.public_dns_name
 		while not success:
 			try:
-				f = urllib2.urlopen("http://%s:%s" % (addr, HTTP_PORT), timeout = TIMEOUT)
+				f = urllib2.urlopen("http://%s:%s" % (addr, 80), timeout = TIMEOUT)
 				if f.read():
 					success = True
 					status = "OK"
@@ -58,8 +61,7 @@ class master:
 
 				self.result[addr] = (instance, status)
 			except Exception, e:
-				info('Exception %s' % e)
-				logger.error('Exception %s' % e)
+				info('Exception %s' % e, error = True)
 				time.sleep(10)
 
 
@@ -69,6 +71,24 @@ class master:
 		for instance in instances:
 			t = Thread(target=self.tryInstance, args=(instance,))
 			t.start()
+
+	def AMI_ID(self):
+		if not self.ami_id:
+			success = False
+			tries = 0
+			while not success:
+				try:
+					f = urllib2.urlopen(AMAZON_META_DATA_URL_AMI_ID, timeout = 10)
+					self.ami_id = f.read()
+					tries +=1
+					if self.ami_id:
+						success = True
+					else:
+						success = tries >= 3
+				except Exception,e:
+					info("%s" % e, error = True)
+					time.sleep(5)
+
 
 	def __init__(self):
 		while True:
@@ -98,7 +118,8 @@ class master:
 					if self.qin_len >= num_good_workers * SQS_LIMIT_HIGH and num_good_workers < MAX_WORKERS:
 						# Launch instances
 						info("Creating instances")
-						self.connector.launch_instances(ami = GUI_AMI_WORKER, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
+						worker_ami = self.connector.get_ami(input_filter = {'Frontend' : 'Worker'})
+						self.connector.launch_instances(ami = worker_ami, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
 						info("Instance launched")
 						
 					elif self.qin_len < num_good_workers * SQS_LIMIT_LOW and num_good_workers > MIN_WORKERS:
@@ -109,8 +130,10 @@ class master:
 						# else we could just pick a instance from the list with good workers and stop directly
 						self.qin.write("STOPINSTANCE") 
 
-					if self.c == 3: # We give up waiting and considering it dead
-						self.connector.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
+					if self.c >= 3: # We give up waiting and considering it dead
+						info("Starting another MASTER")
+						self.AMI_ID()
+						self.connector.launch_instances(ami = self.ami_id, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
 
 					if self.c != 0:
 						# In total we wait TOKEN_TIME + INTERVALL * 1.5  - 10(in worst case)
@@ -120,17 +143,17 @@ class master:
 					self.c +=1
 
 			except Exception, e:
-				info('Exception %s' % e)
-				print e
-				# Always log exceptions
-				logger.error('Exception %s' % e)
+				info('Exception %s' % e, error = True)
 
 			
 			time.sleep(INTERVALL)
 
 
-def info(text):
-	logger.info(text)
+def info(text, error = False):
+	if error:
+		logger.error(text)
+	else:
+		logger.info(text)
 	print text
 
 if __name__ == "__main__":

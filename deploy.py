@@ -238,7 +238,7 @@ class Connector():
 		self.qtoken = awssqs(MASTER_TOKEN, visibility_timeout = TOKEN_TIME)
 		self.qtoken.write("token")
 
-		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
+		self.launch_instances(ami = GUI_AMI_MASTER, num = 2, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
 
 		# ELB with autoscale
 		ports = [(80, 80, 'http')]
@@ -316,6 +316,10 @@ class Connector():
 			dimensions=alarm_dimensions)
 		self.cwconn.create_alarm(scale_down_alarm)
 		scale_down_alarm.enable_actions()
+
+	def get_ami(self, input_filter):
+		for ami in self.conn.get_all_images(filters=dict({'tag-value':user}.items() + input_filter.items()))
+			return ami.id
 	
 	def upload_code(self):
 		for r in self.conn.get_all_instances(filters={'tag-value':user}):
