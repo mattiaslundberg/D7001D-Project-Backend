@@ -17,8 +17,8 @@ SQS_LIMIT_HIGH = 5
 MIN_WORKERS = 1
 MAX_WORKERS = 4
 
-logger = logging.getLogger('SQSMASTER')
-handler = logging.FileHandler('/tmp/SQSMASTER.log')
+logger = logging.getLogger('incomming_master')
+handler = logging.FileHandler('/tmp/in_master.log')
 logger.addHandler(handler) 
 logger.setLevel(logging.INFO)
 

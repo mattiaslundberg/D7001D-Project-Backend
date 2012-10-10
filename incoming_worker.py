@@ -9,8 +9,8 @@ from settings import * # Global variables
 from myparser import *
 import logging
 
-logger = logging.getLogger('handleRequest')
-handler = logging.FileHandler('/tmp/handleRequest.log')
+logger = logging.getLogger('incoming_worker')
+handler = logging.FileHandler('/tmp/in_worker.log')
 logger.addHandler(handler) 
 logger.setLevel(logging.INFO)
 
