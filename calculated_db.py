@@ -2,8 +2,7 @@ import boto
 import time
 import os
 from boto.dynamodb.condition import *
-
-user = os.environ['LTU_USER']
+from settings import user
 
 class db:
 	def __init__(self):
