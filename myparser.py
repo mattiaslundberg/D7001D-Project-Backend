@@ -232,7 +232,7 @@ def processData(carType,libList):
 	else:
 		#count=3
 		#filesList='./pkt/ID10_120915-102613-588 ' + './pkt/ID10_120915-102619-198'+ ' ./pkt/ID10_120915-102624-828'
-		call= "./process -f speed -n %s %s" % (count, filelist)  #'speed' command
+		call= "/home/ubuntu/process -f speed -n %s %s" % (count, filelist)  #'speed' command
 		print call
 		result = commands.getoutput(call)
 
