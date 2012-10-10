@@ -326,7 +326,7 @@ class Connector():
 		scale_down_alarm.enable_actions()
 
 	def get_ami(self, input_filter):
-		for ami in self.conn.get_all_images(filters=dict({'tag-value':user}.items() + input_filter.items()))
+		for ami in self.conn.get_all_images(filters=dict({'tag-value':user}.items() + input_filter.items())):
 			return ami.id
 	
 	def upload_code(self):
