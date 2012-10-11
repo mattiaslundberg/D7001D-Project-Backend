@@ -52,7 +52,18 @@ class master:
 		url = "http://%s:%s" % (addr, 80)
 		while not success:
 			try:
-				f = urllib2.urlopen(url, timeout = TIMEOUT)
+				try:
+					f = urllib2.urlopen(url, timeout = TIMEOUT)
+				except Exception,e:
+					status = "BAD"
+					tries +=1
+					success = tries >= 3
+					self.result[addr] = (instance, status)
+					info("Exception %s" % e, error = True)
+					info("That was for url %s" % url)
+					time.sleep(10)
+					continue
+
 				if f.read():
 					success = True
 					status = "OK"
@@ -150,8 +161,7 @@ class master:
 						# 0.5*INTERVALL to avoid race condition if they happend to be in sync in the first time
 						time.sleep(INTERVALL*0.5)
 
-					#self.c +=1
-					self.c = 0 # TODO: Use above, this only for debugging
+					self.c +=1
 
 			except Exception, e:
 				info('Exception %s' % e, error = True)
