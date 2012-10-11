@@ -48,12 +48,15 @@ class master:
 		success = False
 		tries = 0
 		addr = instance.public_dns_name
+		info("Testing %s" % addr)
+		url = "http://%s:%s" % (addr, 80)
 		while not success:
 			try:
-				f = urllib2.urlopen("http://%s:%s" % (addr, 80), timeout = TIMEOUT)
+				f = urllib2.urlopen(url, timeout = TIMEOUT)
 				if f.read():
 					success = True
 					status = "OK"
+					info("url %s is ok" % url)
 				else:
 					status = "BAD"
 					tries +=1
@@ -61,7 +64,8 @@ class master:
 
 				self.result[addr] = (instance, status)
 			except Exception, e:
-				info('Exception %s' % e, error = True)
+				info("Exception %s" % e, error = True)
+				info("That was for url %s", url)
 				time.sleep(10)
 
 
@@ -87,7 +91,7 @@ class master:
 					else:
 						success = tries >= 3
 				except Exception,e:
-					info("%s" % e, error = True)
+					info("Problem with getting ami id: %s" % e, error = True)
 					time.sleep(5)
 
 
@@ -101,7 +105,7 @@ class master:
 					self.c = 0
 					info("Someone else got token")
 				else:
-					info('i got token :)')
+					info("I got token")
 					tokentext = m.get_body()
 
 					# We got token now
@@ -110,6 +114,10 @@ class master:
 
 					num_good_workers = len([ instance for k, (instance, status) in self.result.iteritems() if status == 'OK' ])
 					bad_workers = [ instance for k, (instance, status) in self.result.iteritems() if status == 'BAD' ]
+
+					info("num_good_workers %s" % num_good_workers)
+					info("num_bad_workers %s" % len(bad_workers))
+					info(self.result)
 
 					for bad_worker in bad_workers:
 						info("stop worker %s" % bad_worker.public_dns_name)
@@ -142,7 +150,8 @@ class master:
 						# 0.5*INTERVALL to avoid race condition if they happend to be in sync in the first time
 						time.sleep(INTERVALL*0.5)
 
-					self.c +=1
+					#self.c +=1
+					self.c = 0 # TODO: Use above, this only for debugging
 
 			except Exception, e:
 				info('Exception %s' % e, error = True)

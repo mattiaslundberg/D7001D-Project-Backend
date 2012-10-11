@@ -48,6 +48,7 @@ class Connector():
 			min_count=num, max_count=num,monitoring_enabled=True,
 			placement='eu-west-1a')
 
+		time.sleep(5)
 		# Tag instances
 		for inst in self.res.instances:
 			inst.add_tag('Name', '12_LP1_EC2_D7001D_%s' % user)
