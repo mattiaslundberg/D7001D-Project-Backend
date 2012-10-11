@@ -163,6 +163,7 @@ class master:
 						# 0.5*INTERVALL to avoid race condition if they happend to be in sync in the first time
 						time.sleep(INTERVALL*0.5)
 
+					time.sleep(INTERVALL)
 					self.c +=1
 
 			except Exception, e:
