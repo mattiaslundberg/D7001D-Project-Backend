@@ -30,15 +30,15 @@ class Connector():
 		self.cwconn = boto.connect_cloudwatch(region=boto.ec2.cloudwatch.regions()[2])
 		self.sconn = AutoScaleConnection(region=boto.ec2.autoscale.regions()[2])
 	
-	def create_ami(self,instance_id,name,tags={}):
+	def create_ami(self,instance_id,name,tags={}, num = 1):
 		_id = self.conn.create_image(instance_id, '12_LP1_AMI_D7001D_GROUP2_%s' % name)
 		time.sleep(5)
 		print 'AMI id = %s' % _id
 		tags = dict(tags.items() + {'user':user, 'course':'D7001D', 'Name':'12_LP1_AMI_D7001D_GROUP2_%s' % name}.items() )
 		print tags
 		self.conn.create_tags([_id], tags)
-		time.sleep(30)
-		self.launch_instances(_id, extra_tags=tags)
+		time.sleep(60)
+		self.launch_instances(_id, num = num, extra_tags=tags)
 	
 	def launch_instances(self, ami, num=1, extra_tags = {}, instance_type = "m1.small"):
 		# Launch one or more EC2 instances from AMI
@@ -294,8 +294,8 @@ class Connector():
 	
 	def start_gui(self):
 		# SQS
-		self.qin = awssqs(FRONTEND_INCOMING, create = True)
-		self.qout = awssqs(FRONTEND_OUTGOING, create = True)
+		self.qin = awssqs(FRONTEND_INCOMING)
+		self.qout = awssqs(FRONTEND_OUTGOING)
 		self.qtoken = awssqs(MASTER_TOKEN, visibility_timeout = TOKEN_TIME)
 		self.qtoken.write("token")
 

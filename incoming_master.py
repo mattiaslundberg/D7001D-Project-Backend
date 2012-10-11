@@ -12,8 +12,8 @@ import socket
 TIMEOUT = max(INTERVALL - 10, 20)
 socket.setdefaulttimeout(TIMEOUT)
 
-SQS_LIMIT_LOW = 2
-SQS_LIMIT_HIGH = 5
+SQS_LIMIT_LOW = 4
+SQS_LIMIT_HIGH = 8
 MIN_WORKERS = 1
 MAX_WORKERS = 4
 
@@ -140,7 +140,7 @@ class master:
 						# Launch instances
 						info("Creating instances")
 
-						worker_ami = self.connector.get_ami(input_filter = {'Frontend' : 'Worker'})
+						worker_ami = self.connector.get_ami(input_filter = {'tag-value' : 'Worker'})
 						self.connector.launch_instances(ami = worker_ami, num = 1, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
 						info("Instance launched")
 						
@@ -154,16 +154,13 @@ class master:
 
 					if self.c >= 2: # We give up waiting and considering it dead after 3 tries
 						info("Starting another MASTER")
-						c = -1 # Cleared
+						self.c = -1 # Cleared
+
 						self.AMI_ID()
 						self.connector.launch_instances(ami = self.ami_id, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
 
-					if self.c != 0:
-						# In total we wait TOKEN_TIME + INTERVALL * 1.5  - 10(in worst case)
-						# 0.5*INTERVALL to avoid race condition if they happend to be in sync in the first time
-						time.sleep(INTERVALL*0.5)
+					time.sleep(TOKEN_TIME - INTERVALL)
 
-					time.sleep(INTERVALL)
 					self.c +=1
 
 			except Exception, e:
@@ -174,6 +171,7 @@ class master:
 
 
 def info(text, error = False):
+	text = "%s %s" % (time.ctime(), text)
 	if error:
 		logger.error(text)
 	else:
