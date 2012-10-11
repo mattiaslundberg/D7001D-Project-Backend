@@ -5,6 +5,7 @@ from calculated_db import db as _db
 import os, time, socket
 import urllib2
 import boto.ec2
+import boto.ec2.elb
 from settings import * # Global variables
 from myparser import *
 import logging
@@ -23,6 +24,7 @@ results = "/tmp/results/"
 
 conn = None
 dns = None
+elb_conn = None
 
 def handleRequest(xmltext):
 	return parse(xmltext)
@@ -31,9 +33,9 @@ def getdns():
 	try:
 		if dns is not None:
 			return dns
-		if conn is None:
-			conn = boto.ec2.connect_to_region('eu-west-1')
-		for e in conn.get_all_load_balancers(load_balancer_names = FRONTEND_ELB):
+		if elb_conn is None:
+			elb_conn = boto.ec2.elb.connect_to_region('eu-west-1')
+		for e in elb_conn.get_all_load_balancers(load_balancer_names = FRONTEND_ELB):
 			dns = e.dns_name
 			return dns
 	except Exception, e:
