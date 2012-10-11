@@ -243,7 +243,7 @@ class Connector():
 			propagate_at_launch=True)
 		utag = Tag(key='user', value=user, resource_id=WSN_ASG,
 			propagate_at_launch=True)
-		ttag = Tag(key='WSN', value='Worker', resource_id=WSN_ASG,
+		ttag = Tag(key='WSN', value='WSNWorker', resource_id=WSN_ASG,
 			propagate_at_launch=True)
 		self.sconn.create_or_update_tags([ntag,ctag,utag,ttag])
 		
