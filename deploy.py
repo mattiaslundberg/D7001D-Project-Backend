@@ -28,6 +28,16 @@ class Connector():
 		self.cwconn = boto.connect_cloudwatch(region=boto.ec2.cloudwatch.regions()[2])
 		self.sconn = AutoScaleConnection(region=boto.ec2.autoscale.regions()[2])
 	
+	def create_ami(self,instance_id,name,tags={}):
+		_id = self.conn.create_image(instance_id, '12_LP1_AMI_D7001D_GROUP2_%s' % name)
+		time.sleep(5)
+		print 'AMI id = %s' % _id
+		tags = dict(tags.items() + {'user':user, 'course':'D7001D', 'Name':'12_LP1_AMI_D7001D_GROUP2_%s' % name}.items() )
+		print tags
+		self.conn.create_tags([_id], tags)
+		time.sleep(30)
+		self.launch_instances(_id, extra_tags=tags)
+	
 	def launch_instances(self, ami, num=1, extra_tags = {}, instance_type = "m1.small"):
 		# Launch one or more EC2 instances from AMI
 		self.res = self.conn.run_instances(
@@ -47,6 +57,7 @@ class Connector():
 				inst.add_tag(key, value)
 	
 	def stop_wsn(self):
+		print 'Delete WSN'
 		## Delete all things created
 		try:
 			self.elbconn.delete_load_balancer(WSN_ELB)
@@ -64,18 +75,26 @@ class Connector():
 			self.cwconn.delete_alarms([WSN_SCALE_DOWN, WSN_SCALE_UP])
 		except Exception, e:
 			print e
+		time.sleep(10)
 	
 	def stop_gui(self):
+		print 'delete GUI'
+		self.qconn = boto.sqs.connection.SQSConnection(region=boto.sqs.regions()[1])
 		try:
+			print 'qout'
+			self.qout = self.qconn.get_queue(FRONTEND_OUTGOING)
 			self.qout.deleteQueue()
 		except Exception, e:
 			print e
-
 		try:
+			print 'qin'
+			self.qin = self.qconn.get_queue(FRONTEND_INCOMING)
 			self.qin.deleteQueue()
 		except Exception, e:
 			print e
 		try:
+			print 'qtoken'
+			self.qtoken = self.qconn.get_queue(MASTER_TOKEN)
 			self.qtoken.deleteQueue()
 		except Exception, e:
 			print e
@@ -97,8 +116,10 @@ class Connector():
 			self.cwconn.delete_alarms([FRONTEND_SCALE_DOWN, FRONTEND_SCALE_UP])
 		except Exception, e:
 			print e
+		time.sleep(10)
 	
 	def stop_db(self):
+		print 'Delete databases'
 		dbconn = boto.dynamodb.connect_to_region('eu-west-1')
 		try:
 			tb = dbconn.get_table('12_LP1_DATA_D7001D_%s' % user)
@@ -106,7 +127,7 @@ class Connector():
 		except Exception, e:
 			print e
 		try:
-			tb = dbconn.get_table('12_LP1_CELLS_D7001D_%s' % user)
+			tb = dbconn.get_table('12_LP1_CEgit checkout part of repoLLS_D7001D_%s' % user)
 			tb.delete()
 		except Exception, e:
 			print e
@@ -115,14 +136,14 @@ class Connector():
 			tb.delete()
 		except Exception, e:
 			print e
-		
+		time.sleep(10)
 	
 	def stop_all(self):
 		self.stop_instances()
 		self.stop_wsn()
 		self.stop_gui()
-
 		self.conn.close()
+		time.sleep(10)
 
 	def stop_instance(self, instance):
 		if instance.state == u'running':
@@ -132,10 +153,12 @@ class Connector():
 
 	
 	def stop_instances(self, instance = None):
+		print 'Stop instances'
 		# Stop all of my running instances and mark for deletion
 		for r in self.conn.get_all_instances(filters={'tag-value':user}):
 			for i in r.instances:
 				self.stop_instance(i)
+		time.sleep(10)
 	
 	def get_instances(self, input_filter={}):
 		instances = []
@@ -190,7 +213,9 @@ class Connector():
 			propagate_at_launch=True)
 		utag = Tag(key='user', value=user, resource_id=WSN_ASG,
 			propagate_at_launch=True)
-		self.sconn.create_or_update_tags([ntag,ctag,utag])
+		ttag = Tag(key='WSN', value='Worker', resource_id=WSN_ASG,
+			propagate_at_launch=True)
+		self.sconn.create_or_update_tags([ntag,ctag,utag,ttag])
 		
 		# How to scale
 		scale_up_policy = ScalingPolicy(
@@ -241,7 +266,7 @@ class Connector():
 		self.launch_instances(ami = GUI_AMI_MASTER, num = 2, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
 
 		# ELB with autoscale
-		ports = [(80, 80, 'http')]
+		ports = [(8080, 8080, 'http')]
 		self.lb = self.elbconn.create_load_balancer(FRONTEND_ELB, ['eu-west-1a'], ports)
 		
 		# DEF Healthcheck
@@ -249,7 +274,7 @@ class Connector():
 			interval=20,
 			healthy_threshold=3,
 			unhealthy_threshold=5,
-			target='HTTP:80/'
+			target='HTTP:8080/'
 		)
 		
 		self.lb.configure_health_check(hc)
@@ -336,8 +361,8 @@ class Connector():
 if __name__ == '__main__':
 	c = Connector()
 	c.start_wsn()
-	#c.start_gui()
-	time.sleep(30)
+	c.start_gui()
+	time.sleep(60)
 	c.print_ip()
 	#time.sleep(10)
 	#c.upload_code()
