@@ -48,12 +48,26 @@ class master:
 		success = False
 		tries = 0
 		addr = instance.public_dns_name
+		info("Testing %s" % addr)
+		url = "http://%s:%s" % (addr, 80)
 		while not success:
 			try:
-				f = urllib2.urlopen("http://%s:%s" % (addr, 80), timeout = TIMEOUT)
+				try:
+					f = urllib2.urlopen(url, timeout = TIMEOUT)
+				except Exception,e:
+					status = "BAD"
+					tries +=1
+					success = tries >= 3
+					self.result[addr] = (instance, status)
+					info("Exception %s" % e, error = True)
+					info("That was for url %s" % url)
+					time.sleep(10)
+					continue
+
 				if f.read():
 					success = True
 					status = "OK"
+					info("url %s is ok" % url)
 				else:
 					status = "BAD"
 					tries +=1
@@ -61,7 +75,8 @@ class master:
 
 				self.result[addr] = (instance, status)
 			except Exception, e:
-				info('Exception %s' % e, error = True)
+				info("Exception %s" % e, error = True)
+				info("That was for url %s" % url)
 				time.sleep(10)
 
 
@@ -69,8 +84,9 @@ class master:
 		self.result = {}
 		instances = self.connector.get_instances({'tag-value':'Worker'})
 		for instance in instances:
-			t = Thread(target=self.tryInstance, args=(instance,))
-			t.start()
+			if instance.state == u'running':
+				t = Thread(target=self.tryInstance, args=(instance,))
+				t.start()
 
 	def AMI_ID(self):
 		if not self.ami_id:
@@ -86,7 +102,7 @@ class master:
 					else:
 						success = tries >= 3
 				except Exception,e:
-					info("%s" % e, error = True)
+					info("Problem with getting ami id: %s" % e, error = True)
 					time.sleep(5)
 
 
@@ -101,7 +117,7 @@ class master:
 					self.c = 0
 					info("Someone else got token")
 				else:
-					info('i got token :)')
+					info("I got token")
 					tokentext = m.get_body()
 
 					# We got token now
@@ -111,6 +127,10 @@ class master:
 					num_good_workers = len([ instance for k, (instance, status) in self.result.iteritems() if status == 'OK' ])
 					bad_workers = [ instance for k, (instance, status) in self.result.iteritems() if status == 'BAD' ]
 
+					info("num_good_workers %s" % num_good_workers)
+					info("num_bad_workers %s" % len(bad_workers))
+					info(self.result)
+
 					for bad_worker in bad_workers:
 						info("stop worker %s" % bad_worker.public_dns_name)
 						self.connector.stop_instance(bad_worker)
@@ -119,6 +139,7 @@ class master:
 					if self.qin_len >= num_good_workers * SQS_LIMIT_HIGH and num_good_workers < MAX_WORKERS:
 						# Launch instances
 						info("Creating instances")
+
 						worker_ami = self.connector.get_ami(input_filter = {'Frontend' : 'Worker'})
 						self.connector.launch_instances(ami = worker_ami, num = 1, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
 						info("Instance launched")
@@ -133,6 +154,7 @@ class master:
 
 					if self.c >= 2: # We give up waiting and considering it dead after 3 tries
 						info("Starting another MASTER")
+						c = -1 # Cleared
 						self.AMI_ID()
 						self.connector.launch_instances(ami = self.ami_id, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
 

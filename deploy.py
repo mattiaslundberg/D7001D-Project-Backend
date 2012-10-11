@@ -4,6 +4,8 @@ import os
 import boto
 import boto.ec2
 import boto.dynamodb
+import boto.route53
+import boto.route53.record
 import time
 import commands
 from boto.ec2.elb import HealthCheck
@@ -48,6 +50,7 @@ class Connector():
 			min_count=num, max_count=num,monitoring_enabled=True,
 			placement='eu-west-1a')
 
+		time.sleep(5)
 		# Tag instances
 		for inst in self.res.instances:
 			inst.add_tag('Name', '12_LP1_EC2_D7001D_%s' % user)
@@ -57,7 +60,21 @@ class Connector():
 				inst.add_tag(key, value)
 	
 	def stop_wsn(self):
+		print 'Delete WSN'
 		## Delete all things created
+		c53=boto.route53.connection.Route53Connection()
+		rec = boto.route53.record.ResourceRecordSets(c53,ADDR_ID)
+		for s in c53.get_all_rrsets(ADDR_ID):
+			if 'wsn' in s.name:
+				ch = rec.add_change('DELETE', WSN_ADDR,'CNAME', 60)
+				for r in s.resource_records: 
+					ch.add_value(r)
+				rec.commit()
+		try:
+			rec.commit()
+		except Exception, e:
+			print e
+		
 		try:
 			self.elbconn.delete_load_balancer(WSN_ELB)
 		except Exception, e:
@@ -74,19 +91,39 @@ class Connector():
 			self.cwconn.delete_alarms([WSN_SCALE_DOWN, WSN_SCALE_UP])
 		except Exception, e:
 			print e
+		time.sleep(10)
 	
 	def stop_gui(self):
+		print 'delete GUI'
+		c53=boto.route53.connection.Route53Connection()
+		rec = boto.route53.record.ResourceRecordSets(c53,ADDR_ID)
+		for s in c53.get_all_rrsets(ADDR_ID):
+			if 'gui' in s.name:
+				ch = rec.add_change('DELETE', GUI_ADDR,'CNAME', 60)
+				for r in s.resource_records: 
+					ch.add_value(r)
+				rec.commit()
 		try:
-			self.qout.deleteQueue()
+			rec.commit()
 		except Exception, e:
 			print e
-
+		self.qconn = boto.sqs.connection.SQSConnection(region=boto.sqs.regions()[1])
 		try:
-			self.qin.deleteQueue()
+			print 'qout'
+			self.qout = self.qconn.get_queue(FRONTEND_OUTGOING)
+			self.qconn.delete_queue(self.qout)
 		except Exception, e:
 			print e
 		try:
-			self.qtoken.deleteQueue()
+			print 'qin'
+			self.qin = self.qconn.get_queue(FRONTEND_INCOMING)
+			self.qconn.delete_queue(self.qin)
+		except Exception, e:
+			print e
+		try:
+			print 'qtoken'
+			self.qtoken = self.qconn.get_queue(MASTER_TOKEN)
+			self.qconn.delete_queue(self.qtoken)
 		except Exception, e:
 			print e
 
@@ -107,8 +144,10 @@ class Connector():
 			self.cwconn.delete_alarms([FRONTEND_SCALE_DOWN, FRONTEND_SCALE_UP])
 		except Exception, e:
 			print e
+		time.sleep(10)
 	
 	def stop_db(self):
+		print 'Delete databases'
 		dbconn = boto.dynamodb.connect_to_region('eu-west-1')
 		try:
 			tb = dbconn.get_table('12_LP1_DATA_D7001D_%s' % user)
@@ -125,14 +164,14 @@ class Connector():
 			tb.delete()
 		except Exception, e:
 			print e
-		
+		time.sleep(10)
 	
 	def stop_all(self):
 		self.stop_instances()
 		self.stop_wsn()
 		self.stop_gui()
-
 		self.conn.close()
+		time.sleep(10)
 
 	def stop_instance(self, instance):
 		if instance.state == u'running':
@@ -142,10 +181,12 @@ class Connector():
 
 	
 	def stop_instances(self, instance = None):
+		print 'Stop instances'
 		# Stop all of my running instances and mark for deletion
 		for r in self.conn.get_all_instances(filters={'tag-value':user}):
 			for i in r.instances:
 				self.stop_instance(i)
+		time.sleep(10)
 	
 	def get_instances(self, input_filter={}):
 		instances = []
@@ -157,6 +198,8 @@ class Connector():
 
 	def print_ip(self):
 		# Print IP:s I might need
+		print 'Real: %s' % WSN_ADDR
+		print 'Real: %s' % GUI_ADDR
 		for e in self.elbconn.get_all_load_balancers():
 			if 'group2' in e.dns_name:
 				print 'ELB: %s' % e.dns_name
@@ -200,7 +243,9 @@ class Connector():
 			propagate_at_launch=True)
 		utag = Tag(key='user', value=user, resource_id=WSN_ASG,
 			propagate_at_launch=True)
-		self.sconn.create_or_update_tags([ntag,ctag,utag])
+		ttag = Tag(key='WSN', value='WSNWorker', resource_id=WSN_ASG,
+			propagate_at_launch=True)
+		self.sconn.create_or_update_tags([ntag,ctag,utag,ttag])
 		
 		# How to scale
 		scale_up_policy = ScalingPolicy(
@@ -240,6 +285,12 @@ class Connector():
 			dimensions=alarm_dimensions)
 		self.cwconn.create_alarm(scale_down_alarm)
 		scale_down_alarm.enable_actions()
+		
+		c53=boto.route53.connection.Route53Connection()
+		rec = boto.route53.record.ResourceRecordSets(c53,ADDR_ID)
+		ch = rec.add_change('CREATE', WSN_ADDR,'CNAME',60)
+		ch.add_value(self.lb.dns_name)
+		rec.commit()
 	
 	def start_gui(self):
 		# SQS
@@ -251,7 +302,7 @@ class Connector():
 		self.launch_instances(ami = GUI_AMI_MASTER, num = 2, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
 
 		# ELB with autoscale
-		ports = [(80, 80, 'http')]
+		ports = [(8080, 8080, 'http')]
 		self.lb = self.elbconn.create_load_balancer(FRONTEND_ELB, ['eu-west-1a'], ports)
 		
 		# DEF Healthcheck
@@ -259,7 +310,7 @@ class Connector():
 			interval=20,
 			healthy_threshold=3,
 			unhealthy_threshold=5,
-			target='HTTP:80/'
+			target='HTTP:8080/'
 		)
 		
 		self.lb.configure_health_check(hc)
@@ -326,6 +377,12 @@ class Connector():
 			dimensions=alarm_dimensions)
 		self.cwconn.create_alarm(scale_down_alarm)
 		scale_down_alarm.enable_actions()
+		
+		c53=boto.route53.connection.Route53Connection()
+		rec = boto.route53.record.ResourceRecordSets(c53, ADDR_ID)
+		ch = rec.add_change('CREATE', GUI_ADDR,'CNAME',60)
+		ch.add_value(self.lb.dns_name)
+		rec.commit()
 
 	def get_ami(self, input_filter):
 		for ami in self.conn.get_all_images(filters=dict({'tag-value':user}.items() + input_filter.items())):
@@ -346,8 +403,8 @@ class Connector():
 if __name__ == '__main__':
 	c = Connector()
 	c.start_wsn()
-	#c.start_gui()
-	time.sleep(30)
+	c.start_gui()
+	time.sleep(60)
 	c.print_ip()
 	#time.sleep(10)
 	#c.upload_code()
