@@ -65,7 +65,7 @@ class master:
 				self.result[addr] = (instance, status)
 			except Exception, e:
 				info("Exception %s" % e, error = True)
-				info("That was for url %s", url)
+				info("That was for url %s" % url)
 				time.sleep(10)
 
 
