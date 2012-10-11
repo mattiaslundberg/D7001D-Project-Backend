@@ -119,7 +119,7 @@ class master:
 					if self.qin_len >= num_good_workers * SQS_LIMIT_HIGH and num_good_workers < MAX_WORKERS:
 						# Launch instances
 						info("Creating instances")
-						worker_ami = self.connector.get_ami(input_filter = {'Frontend' : 'Worker'})
+						worker_ami = self.connector.get_ami(input_filter = {'tag-value' : 'Worker'})
 						self.connector.launch_instances(ami = worker_ami, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
 						info("Instance launched")
 						
