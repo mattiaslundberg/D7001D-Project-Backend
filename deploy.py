@@ -4,6 +4,8 @@ import os
 import boto
 import boto.ec2
 import boto.dynamodb
+import boto.route53
+import boto.route53.record
 import time
 import commands
 from boto.ec2.elb import HealthCheck
@@ -60,6 +62,19 @@ class Connector():
 	def stop_wsn(self):
 		print 'Delete WSN'
 		## Delete all things created
+		c53=boto.route53.connection.Route53Connection()
+		rec = boto.route53.record.ResourceRecordSets(c53,ADDR_ID)
+		for s in c53.get_all_rrsets(ADDR_ID):
+			if 'wsn' in s.name:
+				ch = rec.add_change('DELETE', WSN_ADDR,'CNAME', 60)
+				for r in s.resource_records: 
+					ch.add_value(r)
+				rec.commit()
+		try:
+			rec.commit()
+		except Exception, e:
+			print e
+		
 		try:
 			self.elbconn.delete_load_balancer(WSN_ELB)
 		except Exception, e:
@@ -80,6 +95,18 @@ class Connector():
 	
 	def stop_gui(self):
 		print 'delete GUI'
+		c53=boto.route53.connection.Route53Connection()
+		rec = boto.route53.record.ResourceRecordSets(c53,ADDR_ID)
+		for s in c53.get_all_rrsets(ADDR_ID):
+			if 'gui' in s.name:
+				ch = rec.add_change('DELETE', GUI_ADDR,'CNAME', 60)
+				for r in s.resource_records: 
+					ch.add_value(r)
+				rec.commit()
+		try:
+			rec.commit()
+		except Exception, e:
+			print e
 		self.qconn = boto.sqs.connection.SQSConnection(region=boto.sqs.regions()[1])
 		try:
 			print 'qout'
@@ -171,6 +198,8 @@ class Connector():
 
 	def print_ip(self):
 		# Print IP:s I might need
+		print 'Real: %s' % WSN_ADDR
+		print 'Real: %s' % GUI_ADDR
 		for e in self.elbconn.get_all_load_balancers():
 			if 'group2' in e.dns_name:
 				print 'ELB: %s' % e.dns_name
@@ -256,6 +285,12 @@ class Connector():
 			dimensions=alarm_dimensions)
 		self.cwconn.create_alarm(scale_down_alarm)
 		scale_down_alarm.enable_actions()
+		
+		c53=boto.route53.connection.Route53Connection()
+		rec = boto.route53.record.ResourceRecordSets(c53,ADDR_ID)
+		ch = rec.add_change('CREATE', WSN_ADDR,'CNAME',60)
+		ch.add_value(self.lb.dns_name)
+		rec.commit()
 	
 	def start_gui(self):
 		# SQS
@@ -342,6 +377,12 @@ class Connector():
 			dimensions=alarm_dimensions)
 		self.cwconn.create_alarm(scale_down_alarm)
 		scale_down_alarm.enable_actions()
+		
+		c53=boto.route53.connection.Route53Connection()
+		rec = boto.route53.record.ResourceRecordSets(c53, ADDR_ID)
+		ch = rec.add_change('CREATE', GUI_ADDR,'CNAME',60)
+		ch.add_value(self.lb.dns_name)
+		rec.commit()
 
 	def get_ami(self, input_filter):
 		for ami in self.conn.get_all_images(filters=dict({'tag-value':user}.items() + input_filter.items())):

@@ -30,7 +30,9 @@ def handleRequest(xmltext):
 	return parse(xmltext)
 
 def getdns():
-	try:
+	return 'gui.d7001d.mlundberg.se'
+	
+	try: # Find elb from metadata...
 		if dns is not None:
 			return dns
 		if elb_conn is None:
