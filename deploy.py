@@ -83,19 +83,19 @@ class Connector():
 		try:
 			print 'qout'
 			self.qout = self.qconn.get_queue(FRONTEND_OUTGOING)
-			self.qout.deleteQueue()
+			self.qconn.delete_queue(self.qout)
 		except Exception, e:
 			print e
 		try:
 			print 'qin'
 			self.qin = self.qconn.get_queue(FRONTEND_INCOMING)
-			self.qin.deleteQueue()
+			self.qconn.delete_queue(self.qin)
 		except Exception, e:
 			print e
 		try:
 			print 'qtoken'
 			self.qtoken = self.qconn.get_queue(MASTER_TOKEN)
-			self.qtoken.deleteQueue()
+			self.qconn.delete_queue(self.qtoken)
 		except Exception, e:
 			print e
 
@@ -127,7 +127,7 @@ class Connector():
 		except Exception, e:
 			print e
 		try:
-			tb = dbconn.get_table('12_LP1_CEgit checkout part of repoLLS_D7001D_%s' % user)
+			tb = dbconn.get_table('12_LP1_CELLS_D7001D_%s' % user)
 			tb.delete()
 		except Exception, e:
 			print e
