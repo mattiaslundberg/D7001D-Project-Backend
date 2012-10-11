@@ -69,8 +69,9 @@ class master:
 		self.result = {}
 		instances = self.connector.get_instances({'tag-value':'Worker'})
 		for instance in instances:
-			t = Thread(target=self.tryInstance, args=(instance,))
-			t.start()
+			if instance.state == u'running':
+				t = Thread(target=self.tryInstance, args=(instance,))
+				t.start()
 
 	def AMI_ID(self):
 		if not self.ami_id:

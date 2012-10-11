@@ -5,7 +5,8 @@ from awssqs import awssqs
 
 msg = "test message"
 
-q = awssqs("testQ", create = True)
+q = awssqs("testQ")
+time.sleep(10)
 try:		
 	q.write(msg)
 
