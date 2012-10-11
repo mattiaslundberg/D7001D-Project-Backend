@@ -94,8 +94,9 @@ class master:
 		while True:
 			try:
 				self.getQ()
-				m = self.qtoken.read()
 				t = time.time()
+				m = self.qtoken.read()
+
 				if m is None: # Someone else got token.
 					self.c = 0
 					info("Someone else got token")
@@ -105,7 +106,7 @@ class master:
 
 					# We got token now
 					self.active_workers()
-					time.sleep(TOKEN_TIME - (time.time() - t) - 10) # 10 seconds to actual do the start/stoping of workers
+					time.sleep(TOKEN_TIME - (time.time() - t) - INTERVALL) # INTERVALL seconds to actual do the start/stoping of workers
 
 					num_good_workers = len([ instance for k, (instance, status) in self.result.iteritems() if status == 'OK' ])
 					bad_workers = [ instance for k, (instance, status) in self.result.iteritems() if status == 'BAD' ]
@@ -119,7 +120,7 @@ class master:
 						# Launch instances
 						info("Creating instances")
 						worker_ami = self.connector.get_ami(input_filter = {'Frontend' : 'Worker'})
-						self.connector.launch_instances(ami = worker_ami, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
+						self.connector.launch_instances(ami = worker_ami, num = 1, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
 						info("Instance launched")
 						
 					elif self.qin_len < num_good_workers * SQS_LIMIT_LOW and num_good_workers > MIN_WORKERS:
