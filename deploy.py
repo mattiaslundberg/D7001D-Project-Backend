@@ -299,7 +299,11 @@ class Connector():
 		self.qtoken = awssqs(MASTER_TOKEN, visibility_timeout = TOKEN_TIME)
 		self.qtoken.write("token")
 
-		self.launch_instances(ami = GUI_AMI_MASTER, num = 2, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
+		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
+		
+		# Start one worker
+		worker_ami = self.get_ami(input_filter = {'tag-value' : 'Worker'})
+		self.launch_instances(ami = worker_ami, num = 1, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
 
 		# ELB with autoscale
 		ports = [(8080, 8080, 'http')]
