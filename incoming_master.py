@@ -177,6 +177,7 @@ class master:
 
 						self.AMI_ID()
 						self.connector.launch_instances(ami = self.ami_id, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
+						time.sleep(60) # Time to start
 			except Exception, e:
 				info("Exception %s" % e, error = True)
 				time.sleep(10)
@@ -222,6 +223,7 @@ class master:
 					worker_ami = self.connector.get_ami(input_filter = {'tag-value' : 'Worker'})
 					self.connector.launch_instances(ami = worker_ami, num = 1, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
 					info("Instance launched")
+					time.sleep(60) # Time to stop
 					
 				elif self.qin_len < num_good_workers * SQS_LIMIT_LOW and num_good_workers > MIN_WORKERS:
 					info("Decreasing instances")
@@ -230,6 +232,7 @@ class master:
 					# Meaning that we do not interrupt one.. 
 					# else we could just pick a instance from the list with good workers and stop directly
 					self.qin.write("STOPINSTANCE") 
+					time.sleep(60) # Time to start
 
 
 			except Exception, e:
