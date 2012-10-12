@@ -129,7 +129,7 @@ class master:
 
 	def handleMaster(self):
 		info("handleMaster")
-		masterdict = {}
+		self.masterdict = {}
 		self.get_instance_id()
 		instances = self.connector.get_instances({'tag-value':'Master'})
 		for instance in instances:
