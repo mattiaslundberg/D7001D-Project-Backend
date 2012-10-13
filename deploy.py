@@ -196,6 +196,11 @@ class Connector():
 					instances.append(i)
 		return instances
 
+	def get_instance(self, instance_id):
+		for r in self.conn.get_all_instances([instance_id]):
+			for i in r.instances:
+				return i
+
 	def print_ip(self):
 		# Print IP:s I might need
 		print 'Real: %s' % WSN_ADDR

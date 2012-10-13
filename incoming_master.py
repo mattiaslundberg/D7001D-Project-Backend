@@ -12,10 +12,14 @@ import socket
 TIMEOUT = max(INTERVALL - 10, 20)
 socket.setdefaulttimeout(TIMEOUT)
 
+from datetime import datetime as dt
+
 SQS_LIMIT_LOW = 4
 SQS_LIMIT_HIGH = 8
 MIN_WORKERS = 1
 MAX_WORKERS = 4
+
+MIN_MASTERS = 3
 
 logger = logging.getLogger('incomming_master')
 handler = logging.FileHandler('/tmp/in_master.log')
@@ -40,6 +44,7 @@ class master:
 	masterError = 0
 	instance_id  = None
 	tries = 3
+	locked_on_instance = None
 
 	def getQ(self):
 		if self.qtoken is None:
@@ -50,7 +55,7 @@ class master:
 			self.connector = Connector()
 
 
-	def tryInstance(self, instance, usemasterdict = False):
+	def tryInstance(self, instance, resultdict):
 		success = False
 		tries = 0
 		addr = instance.public_dns_name
@@ -67,10 +72,7 @@ class master:
 					success = tries >= self.tries
 					r = (instance, status)
 
-					if usemasterdict:
-						self.masterdict[addr] = r
-					else:
-						self.result[addr] = r
+					resultdict[addr] = r
 
 					info("That was for url %s" % url)
 					time.sleep(max(0,TIMEOUT - (time.time() - t)))
@@ -87,10 +89,7 @@ class master:
 
 				r = (instance, status)
 
-				if usemasterdict:
-					self.masterdict[addr] = r
-				else:
-					self.result[addr] = r
+				resultdict[addr] = r
 			except Exception, e:
 				info("Exception %s" % e, error = True)
 				info("That was for url %s" % url)
@@ -102,7 +101,7 @@ class master:
 		instances = self.connector.get_instances({'tag-value':'Worker'})
 		for instance in instances:
 			if instance.state == u'running':
-				t = Thread(target=self.tryInstance, args=(instance,))
+				t = Thread(target=self.tryInstance, args=(instance,self.result,))
 				t.start()
 
 	def AMI_ID(self):
@@ -127,17 +126,56 @@ class master:
 			f = urllib2.urlopen(AMAZON_META_DATA_URL_INSTANCE_ID, timeout = 10)
 			self.instance_id = f.read()
 
+	def dta(self,launch_time): # Should be static
+		return dt.strptime(launch_time[:-1],'%Y-%m-%dT%H:%M:%S.%f')
+
 	def handleMaster(self):
 		info("handleMaster")
 		self.masterdict = {}
+
 		self.get_instance_id()
 		instances = self.connector.get_instances({'tag-value':'Master'})
-		for instance in instances:
-			if instance.state == u'running' and instance.id != self.instance_id:
-				# Got other master 
-				t = Thread(target=self.tryInstance, args=(instance, True,))
-				t.start()
-				break
+
+		l = []
+
+		for r in instances:
+			for i in r.instances:
+				if i.state == u'running':
+					m = (i,self.dta(i.launch_time))
+					if i.id == self.instance_id:
+						me = m
+					l.append(m)
+
+		l.sort(key = lambda (i,x): x.timetuple())
+
+		myindex = l.index(me)
+		beforelist = [x for i,x in enumerate(l) if i == myindex - 1 ]
+
+		if len(beforelist) > 0:
+			self.locked_on_instance = beforelist[0][0]
+			th = Thread(target=self.tryInstance, args=(self.locked_on_instance, self.masterdict,))
+			th.start()
+			# else masterdict will be empty meaning it will start a new master
+		else:
+			# If no one before us in list, then we get token automatic
+			self.token = True
+
+			# We should watch the one with highest launch time
+			if len(l) > 1:
+				self.locked_on_instance = l[-1][0]
+				th = Thread(target=self.tryInstance, args=(self.locked_on_instance, self.masterdict,))
+				th.start()
+
+
+		if self.token and len(l) < MIN_MASTERS:
+			# This means we are alone, creating another master!
+			info("Starting another MASTER because we are %s" % len(l))
+
+			self.AMI_ID()
+			self.connector.launch_instances(ami = self.ami_id, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
+			self.locked_on_instance = None
+			time.sleep(60) # Time to start
+				
 
 	def masterChecking(self, async = False):
 		info("masterChecking called")
@@ -170,14 +208,8 @@ class master:
 							except:
 								pass # Dunno if this is needed but will continue close other master if multiple
 
-						self.token = True
 						self.masterError = 0
 
-						info("Starting another MASTER")
-
-						self.AMI_ID()
-						self.connector.launch_instances(ami = self.ami_id, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
-						time.sleep(60) # Time to start
 			except Exception, e:
 				info("Exception %s" % e, error = True)
 				time.sleep(10)
