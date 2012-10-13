@@ -138,13 +138,12 @@ class master:
 
 		l = []
 
-		for r in instances:
-			for i in r.instances:
-				if i.state == u'running':
-					m = (i,self.dta(i.launch_time))
-					if i.id == self.instance_id:
-						me = m
-					l.append(m)
+		for i in instances:
+			if i.state == u'running':
+				m = (i,self.dta(i.launch_time))
+				if i.id == self.instance_id:
+					me = m
+				l.append(m)
 
 		l.sort(key = lambda (i,x): x.timetuple())
 
@@ -198,13 +197,14 @@ class master:
 					# Master not ok
 					info("Master not ok")
 					self.masterError += 1
-					if self.masterError == 3:
+					if self.masterError == 2:
 						# Should only be one, and if not we close them anyway
 						bad_masters = [ instance for k, (instance, status) in self.masterdict.iteritems() if status == 'BAD' ]
 						for bad_master in bad_masters:
 							info("stop master %s" % bad_master.public_dns_name)
 							try:
 								self.connector.stop_instance(bad_master)
+								time.sleep(10) # Time to stop
 							except:
 								pass # Dunno if this is needed but will continue close other master if multiple
 
