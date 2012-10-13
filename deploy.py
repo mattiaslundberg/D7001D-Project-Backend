@@ -120,12 +120,6 @@ class Connector():
 			self.qconn.delete_queue(self.qin)
 		except Exception, e:
 			print e
-		try:
-			print 'qtoken'
-			self.qtoken = self.qconn.get_queue(MASTER_TOKEN)
-			self.qconn.delete_queue(self.qtoken)
-		except Exception, e:
-			print e
 
 		# ELB and autoscale
 		try:
@@ -178,7 +172,6 @@ class Connector():
 			instance.stop()
 		instance.add_tag('Name', 'delete-me_%s' % user)
 		instance.add_tag('action', 'delete')
-
 	
 	def stop_instances(self, instance = None):
 		print 'Stop instances'
@@ -301,8 +294,6 @@ class Connector():
 		# SQS
 		self.qin = awssqs(FRONTEND_INCOMING)
 		self.qout = awssqs(FRONTEND_OUTGOING)
-		self.qtoken = awssqs(MASTER_TOKEN, visibility_timeout = TOKEN_TIME)
-		self.qtoken.write("token")
 
 		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
 		

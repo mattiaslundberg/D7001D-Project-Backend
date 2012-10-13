@@ -1,8 +1,6 @@
 #!/usr/bin/python
 import os, time
 import logging
-#import boto
-#import boto.ec2
 from threading import Thread
 import urllib2
 from awssqs import awssqs
@@ -44,11 +42,8 @@ class master:
 	masterError = 0
 	instance_id  = None
 	tries = 3
-	locked_on_instance = None
 
 	def getQ(self):
-		if self.qtoken is None:
-			self.qtoken = awssqs(MASTER_TOKEN)
 		if self.qin is None:
 			self.qin = awssqs(FRONTEND_INCOMING)
 		if self.connector is None:
