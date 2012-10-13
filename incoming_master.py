@@ -1,16 +1,16 @@
 #!/usr/bin/python
 import os, time
 import logging
-from threading import Thread
 import urllib2
+import socket
 from awssqs import awssqs
 from deploy import Connector
 from settings import * # Global variables
-import socket
+from threading import Thread
+from datetime import datetime as dt
+
 TIMEOUT = max(INTERVALL - 10, 20)
 socket.setdefaulttimeout(TIMEOUT)
-
-from datetime import datetime as dt
 
 SQS_LIMIT_LOW = 4
 SQS_LIMIT_HIGH = 8
