@@ -32,6 +32,7 @@ class db:
 	
 	def load_packets(self, cell, side, cartype, start=0, end=2**64):
 		logger.info('loading packet cell=%s side=%s car=%s interval=%s-%s',cell,side,cartype,start,end)
+		cells = self.cells.query(hash_key=1, range_key_condition = EQ(cell))
 		if not cell in self.load_cells():
 			raise CellNotFoundError()
 		items = self.table.query(
