@@ -14,7 +14,7 @@ WSN_POLICY_UP = '12_LP1_WSNUPPOL_D7001D_%s' % user
 WSN_POLICY_DOWN = '12_LP1_WSNDWNPOL_D7001D_%s' % user
 WSN_ASG = '12_LP1_WSNASG_D7001D_%s' % user
 WSN_LC = '12_LP1_WSNLC_D7001D_%s' % user
-WSN_AMI ='ami-b9b6b6cd'
+WSN_AMI ='ami-adbabad9'
 
 #### GUI NAMES ####
 FRONTEND_ELB = 'FRONTENDelbgroup2'

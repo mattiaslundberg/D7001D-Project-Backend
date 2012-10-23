@@ -3,6 +3,7 @@ import commands
 import socket
 import time
 import struct
+import sys
 
 """
 Send some random testdata.
@@ -33,5 +34,6 @@ if __name__ == '__main__':
 					s.send(tosend + data)
 					s.close()
 					if max_tests < 0:
-						break
+						sys.exit()
 					max_tests-=1
+		sleep(1)

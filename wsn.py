@@ -67,7 +67,7 @@ class WSNTCPHandler(SocketServer.BaseRequestHandler):
 		logger.info("size %d" % int(self.size))
 		
 		file_name = '/tmp/read-file-%s' % threading.current_thread().ident
-		f = open(file_name, 'w')
+		f = open(file_name, 'wb')
 		f.write(self.data)
 		f.close()
 		self.cartype = commands.getoutput("/home/ubuntu/process -f type -n 1 %s" % file_name)
