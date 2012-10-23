@@ -55,7 +55,7 @@ c = 0
 while True:
 	try:
 		if not qIncoming:
-			qIncoming = awssqs(FRONTEND_INCOMING)
+			qIncoming = awssqs(FRONTEND_INCOMING, 3600)
 		if not qOutgoing:
 			qOutgoing = awssqs(FRONTEND_OUTGOING)
 
@@ -117,4 +117,3 @@ while True:
 			qIncoming = None
 			qOutgoing = None
 			c = 0
-

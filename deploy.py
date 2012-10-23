@@ -160,6 +160,12 @@ class Connector():
 			print e
 		time.sleep(10)
 	
+	def start_db(self):
+		from dynamo import db as _db
+		db = _db()
+		from calculated_db import db as _db2
+		db2 = _db2()
+	
 	def stop_all(self):
 		self.stop_instances()
 		self.stop_wsn()
@@ -224,14 +230,14 @@ class Connector():
 		# Settings for launched instances
 		self.lc = LaunchConfiguration(name=WSN_LC, image_id=WSN_AMI,
 				key_name='12_LP1_KEY_D7001D_%s' % user,
-				instance_type='m1.medium',
+				instance_type='c1.medium',
 				security_groups=['12_LP1_SEC_D7001D_%s' % user])
 		self.sconn.create_launch_configuration(self.lc)
 		
 		## Scale group
 		self.ag = AutoScalingGroup(group_name=WSN_ASG, load_balancers=[WSN_ELB],
 				availability_zones=['eu-west-1a'],
-				launch_config=self.lc, min_size=2, max_size=8)
+				launch_config=self.lc, min_size=8, max_size=24)
 		self.sconn.create_auto_scaling_group(self.ag)
 		
 		# Tag instances
@@ -299,7 +305,7 @@ class Connector():
 		
 		# Start one worker
 		worker_ami = self.get_ami(input_filter = {'tag-value' : 'Worker'})
-		self.launch_instances(ami = worker_ami, num = 1, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
+		self.launch_instances(ami = worker_ami, num = 10, extra_tags = {'Frontend' : 'Worker'}, instance_type='c1.medium')
 
 		# ELB with autoscale
 		ports = [(8080, 8080, 'http')]

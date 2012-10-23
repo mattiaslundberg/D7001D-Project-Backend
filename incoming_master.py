@@ -12,10 +12,10 @@ from datetime import datetime as dt
 TIMEOUT = max(INTERVALL - 10, 20)
 socket.setdefaulttimeout(TIMEOUT)
 
-SQS_LIMIT_LOW = 4
-SQS_LIMIT_HIGH = 8
-MIN_WORKERS = 1
-MAX_WORKERS = 4
+SQS_LIMIT_LOW = 10
+SQS_LIMIT_HIGH = 25
+MIN_WORKERS = 5
+MAX_WORKERS = 20
 
 MIN_MASTERS = 3
 
@@ -166,7 +166,7 @@ class master:
 			info("Starting another MASTER because we are %s" % len(l))
 
 			self.AMI_ID()
-			self.connector.launch_instances(ami = self.ami_id, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
+			self.connector.launch_instances(ami = self.ami_id, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='c1.medium')
 			self.locked_on_instance = None
 			time.sleep(60) # Time to start
 				
@@ -248,7 +248,7 @@ class master:
 					info("Creating instances")
 
 					worker_ami = self.connector.get_ami(input_filter = {'tag-value' : 'Worker'})
-					self.connector.launch_instances(ami = worker_ami, num = 1, extra_tags = {'Frontend' : 'Worker'}, instance_type='m1.small')
+					self.connector.launch_instances(ami = worker_ami, num = 1, extra_tags = {'Frontend' : 'Worker'}, instance_type='c1.medium')
 					info("Instance launched")
 					time.sleep(60) # Time to stop
 					
