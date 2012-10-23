@@ -86,8 +86,8 @@ class db:
 		table = self.conn.create_table(
 			name='12_LP1_DATA_D7001D_%s' % user,
 			schema=schema,
-			read_units=10,
-			write_units=10
+			read_units=1000,
+			write_units=1000
 		)
 	
 	def create_slave(self):
@@ -101,6 +101,6 @@ class db:
 		table = self.conn.create_table(
 			name='12_LP1_CELLS_D7001D_%s' % user,
 			schema=schema,
-			read_units=10,
-			write_units=10
+			read_units=1000,
+			write_units=1000
 		)

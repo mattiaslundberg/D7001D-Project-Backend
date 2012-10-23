@@ -41,6 +41,6 @@ class db:
 		self.table = self.conn.create_table(
 			name='12_LP1_CALC_D7001D_%s' % user,
 			schema=schema,
-			read_units=10,
-			write_units=10
+			read_units=100,
+			write_units=100
 		)
