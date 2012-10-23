@@ -9,16 +9,16 @@ from awssqs import awssqs
 #inxmltext = file("../parser_test/RequestID%s" % num,"r").read()
 
 q = awssqs(FRONTEND_INCOMING)
-inxmltext = file("../parser_test/RequestID1.XML","r").read()
-print inxmltext
-parsa(inxmltext)
+#inxmltext = file("../parser_test/RequestID1.XML","r").read()
+#print inxmltext
+#parsa(inxmltext)
 #sys.exit()
 
 def process(inxmltext):
 	time.sleep(1)
 	print inxmltext
-	parsa(inxmltext)
-	#q.write(inxmltext)
+	#parsa(inxmltext)
+	q.write(inxmltext)
 
 #test ListCells
 for num in xrange(1,10):
