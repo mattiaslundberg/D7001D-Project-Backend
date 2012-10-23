@@ -206,6 +206,15 @@ def XML_CellStatNet(resultTuple):
 	content+=one_line('TotalCar',str(nrOfCars),2)
 	content+=one_line('TotalAmountOfData',str(totalAmountOfData),2)
 	return XML(reqType(1)+step('Cell',content,1),0)
+	
+def XML_Request(requestID,RequestType,TimeStart,TimeStop,CellID):
+	e='RequestID'+str(requestID)
+	content=''
+	content+=one_line('RequestType',RequestType,1)
+	content+=one_line('TimeStart',TimeStart,1)
+	content+=one_line('TimeStop',TimeStop,1)
+	content+=one_line('CellID',str(CellID),1)
+	return step(e,content,0)
 
 ######################## function for processing data ############################
 def processData(carType,libList):
@@ -295,7 +304,7 @@ def parse(xml_string):	  #uncomment when running for real
 		#stri = file("./parser_test/RequestIDXXXXXXX.XML","r").read()
 		#p.Parse(stri)
 		if debug:
-		   print 'finished parsing'
+			print 'finished parsing'
 
 	except xml.parsers.expat.ExpatError:
 			return XML_XMLError(),dicti['RequestID']
@@ -364,6 +373,9 @@ def parse(xml_string):	  #uncomment when running for real
 			#error message cases
 			except CellNotFoundError:
 				return XML_CellIDError(), dicti['RequestID']
+			except Exception, e:
+				print e
+				return XML_XMLError(),dicti['RequestID']
 		
 		#create xml
 		xmlText=XML_CellStatSpeed(rawListCellID_0,rawListCellID_1)
@@ -375,11 +387,11 @@ def parse(xml_string):	  #uncomment when running for real
 	if requestType == 'CellStatNet':#いいいいいいいいいいいいいい
 		#result
 		if testing:
-		   if debug:
-			  print 'starting CellStatNet'
-		   #tuple with  FirstCar	 LastCar		  TotalNrCars TotalAmountOfData(MB)
-		   resultTuple = (1,198708170000),(5,198708170001),7,10
-		   #libList = [{'data':'123,1231,123,213', 'timestamp':'12341234'},{'data':'123,123', 'timestamp':1234}]
+			if debug:
+				print 'starting CellStatNet'
+			#tuple with  FirstCar	 LastCar		  TotalNrCars TotalAmountOfData(MB)
+			resultTuple = (1,198708170000),(5,198708170001),7,10
+			#libList = [{'data':'123,1231,123,213', 'timestamp':'12341234'},{'data':'123,123', 'timestamp':1234}]
 		else:
 			d = _db()
 			#dict
@@ -407,6 +419,9 @@ def parse(xml_string):	  #uncomment when running for real
 					
 				except CellNotFoundError:
 					return XML_CellIDError(), dicti['RequestID']
+				except Exception, e:
+					print e
+					return XML_XMLError(),dicti['RequestID']
 					
 		   
 			##create a list of tuples of the form (CarType,TimeStamp)
@@ -434,5 +449,5 @@ def parse(xml_string):	  #uncomment when running for real
 		#print xmlText
 		return xmlText,dicti['RequestID']
 
-	print 'WARNING! no RequestID found!'
+	print 'WARNING! no RequestType found!'
 	return XML_XMLError(),dicti['RequestID']
