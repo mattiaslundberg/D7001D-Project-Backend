@@ -202,7 +202,7 @@ def XML_CellStatNet(resultTuple):
 
 	subContent=one_line('Cartype',asAlpha[carTypeLast],4)
 	subContent+=one_line('TimeStamp',str(timestampLast),4)
-	content+=step('FirstCar',subContent,3)
+	content+=step('LastCar',subContent,3)
 	content+=one_line('TotalCar',str(nrOfCars),2)
 	content+=one_line('TotalAmountOfData',str(totalAmountOfData),2)
 	return XML(reqType(1)+step('Cell',content,1),0)
