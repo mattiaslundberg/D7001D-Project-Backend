@@ -7,6 +7,7 @@ from settings import * # Global variables
 
 q = awssqs(FRONTEND_OUTGOING)
 
+fout = open("outgoing_results.xml", "a+b")
 while True:
 	try:
 		m = q.read()
@@ -16,10 +17,14 @@ while True:
 			f = urllib2.urlopen(url)
 			data = f.read()
 			print "MSG: %s" % data
+			fout.write(data)
+			q.delete(m)
 		else:
 			print "empty"
+			break
+
 	except Exception,e:
 		print e
+		time.sleep(10)
 
-	time.sleep(10)
-
+fout.close()
