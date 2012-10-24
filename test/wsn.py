@@ -18,15 +18,15 @@ Rawdata			xx
 """
 
 if __name__ == '__main__':
-	max_tests = 10000
+	max_tests = 1000
 	while True:
-		for ce in xrange(1,9):
-			for si in xrange(0,1):
-				for f in commands.getoutput("ls ../pkt").split('\n'):
-					print max_tests
+		for f in commands.getoutput("ls ../pkt").split('\n'):
+			for ce in xrange(1,10):
+				for si in xrange(0,2):
+					print 'test %d ce=%d si=%d' % (max_tests, ce, si)
 					s = socket.socket(
-						socket.AF_INET, socket.SOCK_STREAM)
-					s.connect(('wsn.d7001d.mlundberg.se', 12345))
+					socket.AF_INET, socket.SOCK_STREAM)
+					s.connect(('wsnelbgroup2-1188430327.eu-west-1.elb.amazonaws.com', 12345))
 					f_open = open('../pkt/%s' % f)
 					data = f_open.read()
 					f_open.close()
@@ -36,4 +36,5 @@ if __name__ == '__main__':
 					if max_tests < 0:
 						sys.exit()
 					max_tests-=1
-		sleep(1)
+		print 'SLEEP 10 sek'
+		sleep(10)

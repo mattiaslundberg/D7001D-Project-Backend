@@ -238,7 +238,7 @@ class Connector():
 		## Scale group
 		self.ag = AutoScalingGroup(group_name=WSN_ASG, load_balancers=[WSN_ELB],
 				availability_zones=['eu-west-1a'],
-				launch_config=self.lc, min_size=8, max_size=24)
+				launch_config=self.lc, min_size=1, max_size=24)
 		self.sconn.create_auto_scaling_group(self.ag)
 		
 		# Tag instances
@@ -255,7 +255,7 @@ class Connector():
 		# How to scale
 		scale_up_policy = ScalingPolicy(
 				name=WSN_POLICY_UP, adjustment_type='ChangeInCapacity',
-				as_name=WSN_ASG, scaling_adjustment=1, cooldown=30)
+				as_name=WSN_ASG, scaling_adjustment=2, cooldown=30)
 		scale_down_policy = ScalingPolicy(
 				name=WSN_POLICY_DOWN, adjustment_type='ChangeInCapacity',
 				as_name=WSN_ASG, scaling_adjustment=-1, cooldown=30)
@@ -307,7 +307,7 @@ class Connector():
 		
 		# Start one worker
 		worker_ami = self.get_ami(input_filter = {'tag-value' : 'Worker'})
-		self.launch_instances(ami = worker_ami, num = 10, extra_tags = {'Frontend' : 'Worker'}, instance_type='c1.medium')
+		self.launch_instances(ami = worker_ami, num = 1, extra_tags = {'Frontend' : 'Worker'}, instance_type='c1.medium')
 
 		# ELB with autoscale
 		ports = [(8080, 8080, 'http')]
@@ -333,7 +333,7 @@ class Connector():
 		## Scale group
 		self.ag = AutoScalingGroup(group_name=FRONTEND_ASG, load_balancers=[FRONTEND_ELB],
 				availability_zones=['eu-west-1a'],
-				launch_config=self.lc, min_size=2, max_size=8)
+				launch_config=self.lc, min_size=1, max_size=8)
 		self.sconn.create_auto_scaling_group(self.ag)
 		
 		# Tag instances
@@ -410,8 +410,11 @@ class Connector():
 
 if __name__ == '__main__':
 	c = Connector()
+	print 'starting wsn'
 	c.start_wsn()
+	print 'starting gui'
 	c.start_gui()
+	print 'sleep 60sek'
 	time.sleep(60)
 	c.print_ip()
 	#time.sleep(10)
