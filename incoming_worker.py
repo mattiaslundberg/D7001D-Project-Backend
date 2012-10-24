@@ -99,12 +99,14 @@ while True:
 		print "Writing result %s" % result
 		db.write(requestID, result)
 
-		logger.info("Result written %s" % xmltext)
+		logger.info("Result written %s" % result)
 
 		if not qOutgoing:
-			qOutgoing = awssqs(FRONTEND_INCOMING)
+			qOutgoing = awssqs(FRONTEND_OUTGOING)
 
 		qOutgoing.write("http://%s:%s/?requestid=%s" % (getdns(), HTTP_PORT, requestID))
+
+		logger.info("qOutgoing finish writing to")
 
 		qIncoming.delete(m)
 	except Exception, e:
