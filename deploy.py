@@ -214,6 +214,7 @@ class Connector():
 	
 	def start_wsn(self):
 		# Launch a ELB with autoscaling
+		self.start_db()
 		ports = [(12345, 12345, 'tcp')]
 		self.lb = self.elbconn.create_load_balancer(WSN_ELB, ['eu-west-1a'], ports)
 		
@@ -298,6 +299,7 @@ class Connector():
 	
 	def start_gui(self):
 		# SQS
+		self.start_db()
 		self.qin = awssqs(FRONTEND_INCOMING)
 		self.qout = awssqs(FRONTEND_OUTGOING)
 
