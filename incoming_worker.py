@@ -104,7 +104,7 @@ while True:
 		if not qOutgoing:
 			qOutgoing = awssqs(FRONTEND_OUTGOING)
 
-		qOutgoing.write("http://%s:%s/?requestid=%s" % (getdns(), HTTP_PORT, requestID))
+		qOutgoing.write("http://%s:%s/RequestID%s.xml" % (getdns(), HTTP_PORT, requestID))
 
 		logger.info("qOutgoing finish writing to")
 
