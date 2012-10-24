@@ -1,0 +1,2 @@
+from myparser import *
+quicktest()

@@ -281,6 +281,10 @@ def msToDate(ms):				  #ms format: float/long in ms
 ###################################################
 ######## parse code starts running here  ##########
 ###################################################
+def quicktest():
+	f = file("./parser_test/RequestID1.XML","r")	
+	parsa(f.read())
+
 def parsa(xml_string):
 	xml,id = parse(xml_string)
 	print xml
@@ -295,36 +299,46 @@ def parse(xml_string):	  #uncomment when running for real
 	p.EndElementHandler = end_element
 	p.CharacterDataHandler = char_data
 	if debug:
-	  print 'starting parsing'
+		print 'starting parsing'
+	dicti['RequestID'] = 0  #if all else fails, at least we can successfully return an xml error with a request id
 	try:
-		#f = file("./parser_test/RequestIDXXXXXXX.XML","r")	
 		p.Parse(xml_string)
-		#p.Parse(f.read())
-
-		#stri = file("./parser_test/RequestIDXXXXXXX.XML","r").read()
-		#p.Parse(stri)
+		
 		if debug:
 			print 'finished parsing'
-
+			
 	except xml.parsers.expat.ExpatError:
-			return XML_XMLError(),dicti['RequestID']
-##	except AttributeError:
-##			dicti['RequestID']=0
-##			xmll = XML_XMLError()
-##			#print xmll
-##			return xmll,dicti['RequestID']
+		print "ExpatError while parsing xml"
+		return XML_XMLError(),dicti['RequestID']
+
+
+
+	#check that content of dictionary is valid
+	try: 
+		try:
+			idd=dicti['RequestID']
+			apa = int(idd)+1
+		except:
+			dicti['RequestID'] = 0
+		requestType=dicti['RequestType']
+		if requestType != 'ListCells':
+			#check for faults in instructions
+			if len(str(dicti["TimeStart"]))!=12:
+					return XML_StartTimeError(),dicti['RequestID']
+			if len(str(dicti["TimeStop"]))!=12:
+					return XML_StopTimeError(),dicti['RequestID']
+			try:
+				cellID = dicti['CellID']
+				n = int(cellID) + 1
+			except Exception, e:
+				return XML_CellIDError(), dicti['RequestID']
+			
+	except Exception, e:
+		return XML_XMLError(),dicti['RequestID']
 
 	#by now, all neccecary information should be stored in the dictionary named 'dicti'
-	#print dicti,n()
-	requestType=dicti['RequestType']
-
-	#check for faults in instructions
-	if len(str(dicti["TimeStart"]))!=12:
-			return XML_StartTimeError(),dicti['RequestID']
-	if len(str(dicti["TimeStop"]))!=12:
-			return XML_StopTimeError(),dicti['RequestID']
-
-
+	if debug:
+		print 'handling request'
 
 	#¤¤¤¤¤¤¤¤¤¤¤¤   handling requests   ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 	if requestType == 'ListCells':#¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤

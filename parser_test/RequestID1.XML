@@ -1,0 +1,7 @@
+<RequestID5>
+	<RequestType>CellStatNet</RequestType> <!-- ListCells OR CellStatNet OR CellStatSpeed -->
+	<!-- Everything below is not relevant for ListCells -->
+	<TimeStart>201210120000</TimeStart>
+	<TimeStop>201210102000</TimeStop>
+	<CellID>1</CellID>
+</RequestID5>
