@@ -238,7 +238,7 @@ class Connector():
 		## Scale group
 		self.ag = AutoScalingGroup(group_name=WSN_ASG, load_balancers=[WSN_ELB],
 				availability_zones=['eu-west-1a'],
-				launch_config=self.lc, min_size=1, max_size=24)
+				launch_config=self.lc, min_size=10, max_size=100)
 		self.sconn.create_auto_scaling_group(self.ag)
 		
 		# Tag instances
@@ -255,10 +255,10 @@ class Connector():
 		# How to scale
 		scale_up_policy = ScalingPolicy(
 				name=WSN_POLICY_UP, adjustment_type='ChangeInCapacity',
-				as_name=WSN_ASG, scaling_adjustment=2, cooldown=30)
+				as_name=WSN_ASG, scaling_adjustment=5, cooldown=30)
 		scale_down_policy = ScalingPolicy(
 				name=WSN_POLICY_DOWN, adjustment_type='ChangeInCapacity',
-				as_name=WSN_ASG, scaling_adjustment=-1, cooldown=30)
+				as_name=WSN_ASG, scaling_adjustment=-5, cooldown=30)
 		
 		self.sconn.create_scaling_policy(scale_up_policy)
 		self.sconn.create_scaling_policy(scale_down_policy)
@@ -303,11 +303,11 @@ class Connector():
 		self.qin = awssqs(FRONTEND_INCOMING)
 		self.qout = awssqs(FRONTEND_OUTGOING)
 
-		#self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
+		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
 		
 		# Start one worker
 		worker_ami = self.get_ami(input_filter = {'tag-value' : 'Worker'})
-		self.launch_instances(ami = worker_ami, num = 1, extra_tags = {'Frontend' : 'Worker'}, instance_type='c1.medium')
+		self.launch_instances(ami = worker_ami, num = 10, extra_tags = {'Frontend' : 'Worker'}, instance_type='c1.medium')
 
 		# ELB with autoscale
 		ports = [(8080, 8080, 'http')]
@@ -333,7 +333,7 @@ class Connector():
 		## Scale group
 		self.ag = AutoScalingGroup(group_name=FRONTEND_ASG, load_balancers=[FRONTEND_ELB],
 				availability_zones=['eu-west-1a'],
-				launch_config=self.lc, min_size=1, max_size=8)
+				launch_config=self.lc, min_size=3, max_size=9)
 		self.sconn.create_auto_scaling_group(self.ag)
 		
 		# Tag instances
