@@ -164,7 +164,7 @@ def XML_CellStatSpeed(rawListCellID_0,rawListCellID_1):
 		subContent += one_line('MinSpeed',str(carType[1]),4)
 		subContent += one_line('MaxSpeed',str(carType[2]),4)
 		subContent += one_line('AverageSpeed',str(carType[3]),4)
-		listCellID_A+=step('Cartype'+asAlpha[carType[0]],subContent,3)
+		listCellID_A+=step('CarType'+asAlpha[carType[0]],subContent,3)
 		
 	for carType in rawListCellID_1:
 		subContent=''
@@ -196,11 +196,11 @@ def XML_CellStatNet(resultTuple):
 	content+=one_line('TimeStart',dicti['TimeStart'],2)
 	content+=one_line('TimeStop',dicti['TimeStop'],2)
 	
-	subContent=one_line('Cartype',asAlpha[carTypeFirst],4)
+	subContent=one_line('CarType',asAlpha[carTypeFirst],4)
 	subContent+=one_line('TimeStamp',str(timestampFirst),4)
 	content+=step('FirstCar',subContent,3)
 
-	subContent=one_line('Cartype',asAlpha[carTypeLast],4)
+	subContent=one_line('CarType',asAlpha[carTypeLast],4)
 	subContent+=one_line('TimeStamp',str(timestampLast),4)
 	content+=step('LastCar',subContent,3)
 	content+=one_line('TotalCar',str(nrOfCars),2)
@@ -452,8 +452,8 @@ def parse(xml_string):	  #uncomment when running for real
 
 				#TotalAmountOfData??
 				#don't bother at all ;)...
-				print [it['data'] for it in ct for ct in lib]
-				totalAmtData = len(''.join([it['data'] for it in ct for ct in lib]))
+				print [it for it in ct for ct in lib]
+				totalAmtData = len(''.join([it for it in ct for ct in lib]))
 				print totalAmtData
 				#get first and last of list
 				resultTuple = carList[0],carList[-1],len(carList),totalAmtData
