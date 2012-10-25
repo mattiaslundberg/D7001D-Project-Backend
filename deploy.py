@@ -303,7 +303,7 @@ class Connector():
 		self.qin = awssqs(FRONTEND_INCOMING)
 		self.qout = awssqs(FRONTEND_OUTGOING)
 
-		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
+		#self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
 		
 		# Start one worker
 		worker_ami = self.get_ami(input_filter = {'tag-value' : 'Worker'})

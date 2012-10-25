@@ -26,7 +26,7 @@ if __name__ == '__main__':
 					print 'test %d ce=%d si=%d' % (max_tests, ce, si)
 					s = socket.socket(
 					socket.AF_INET, socket.SOCK_STREAM)
-					s.connect(('wsnelbgroup2-1188430327.eu-west-1.elb.amazonaws.com', 12345))
+					s.connect(('wsn.d7001d.mlundberg.se', 12345))
 					f_open = open('../pkt/%s' % f)
 					data = f_open.read()
 					f_open.close()
@@ -36,5 +36,5 @@ if __name__ == '__main__':
 					if max_tests < 0:
 						sys.exit()
 					max_tests-=1
-		print 'SLEEP 10 sek'
-		sleep(10)
+			print 'SLEEP 10 sek'
+			time.sleep(10)
