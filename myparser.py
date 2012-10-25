@@ -255,6 +255,7 @@ def processData(carType,libList):
 	res_min = res[1] #0-200
 	res_max = res[2] #0-200
 	res_average = res[3] #0-200
+	assert res_min <= res_average <= res_max
 	if not res[0]:
 		print 'error while processing: code '+res[0]
 		#throw exception!
@@ -375,13 +376,17 @@ def parse(xml_string):	  #uncomment when running for real
 						libList = d.load_packets(int(cellID), int(side), int(cartype), int(dateToMs(start)), int(dateToMs(end)))
 						#libList = d.load_packets(int(cellID), int(side), int(cartype), 0, 2**64)
 							#process
-						if libList: #if list is not empty
+						if len(libList) > 1: #if list is not empty
 							print 'processing data...'
-							tuplee = processData(cartype,libList)
-							if int(side) is 0:
-								rawListCellID_0.append(tuplee)
+							try:
+								tuplee = processData(cartype,libList)
+							except AssertionError, e:
+								print "Strange data from process"
 							else:
-								rawListCellID_1.append(tuplee)
+								if int(side) is 0:
+									rawListCellID_0.append(tuplee)
+								else:
+									rawListCellID_1.append(tuplee)
 						else:
 							print 'list length: '+str(len(libList))
 			
