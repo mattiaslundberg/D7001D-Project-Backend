@@ -453,7 +453,7 @@ def parse(xml_string):	  #uncomment when running for real
 				#TotalAmountOfData??
 				#don't bother at all ;)...
 				print carList
-				totalAmtData = len(''.join([ct[0] for ct in carList]))
+				totalAmtData = len(''.join([str(ct[0]) for ct in carList]))
 				print totalAmtData
 				#get first and last of list
 				resultTuple = carList[0],carList[-1],len(carList),totalAmtData
