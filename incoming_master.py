@@ -243,7 +243,7 @@ class master:
 					self.connector.stop_instance(bad_worker)
 
 				self.qin_len = self.qin.length()
-				if self.qin_len >= num_good_workers * SQS_LIMIT_HIGH and num_good_workers < MAX_WORKERS:
+				if self.qin_len >= num_good_workers * SQS_LIMIT_HIGH and num_good_workers < MAX_WORKERS or num_good_workers < MIN_WORKERS:
 					# Launch instances
 					info("Creating instances")
 
@@ -252,7 +252,7 @@ class master:
 					info("Instance launched")
 					time.sleep(60) # Time to stop
 					
-				elif self.qin_len < num_good_workers * SQS_LIMIT_LOW and num_good_workers > MIN_WORKERS:
+				elif self.qin_len < num_good_workers * SQS_LIMIT_LOW and num_good_workers > MIN_WORKERS or num_good_workers > MAX_WORKERS:
 					info("Decreasing instances")
 
 					# Remove instances by sending a message
