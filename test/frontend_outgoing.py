@@ -13,7 +13,7 @@ while True:
 		m = q.read()
 		if m is not None:
 			url = m.get_body()
-			print "url %s" % url
+			print "Url %s" % url
 			f = urllib2.urlopen(url)
 			data = f.read()
 			print "MSG: %s" % data
