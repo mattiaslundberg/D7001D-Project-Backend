@@ -32,7 +32,8 @@ def start_element(name, attrs):
 		key = 'RequestID'
 		data = name[9:] #fetch id
 		dicti[key] = data;#store
-		#print 'added '+key+' : '+data
+		
+		print 'added '+key+' : '+data + 'dicti[key]=' + str(dicti[key])
 		
 #print 'Start element:', name, " - new key: "+key #, attrs
 def end_element(name):
@@ -41,11 +42,10 @@ def end_element(name):
 	#print 'End element:', name
 def char_data(data):
 	global key
-	if data != u'\n' and data != u'\t':
+	if data != u'\n' and data != u'\t' and key != 'RequestID':
 		dicti[key] = data;
-		#print 'added '+key+' : '+data
+		print 'added '+key+' : '+data
 		#print 'Character data:', repr(data)
-
 
 
 ########## text formatting
@@ -291,7 +291,6 @@ def parsa(xml_string):
 	print xml
 	return
 
-
 def parse(xml_string):	  #uncomment when running for real
 	clearData()
 	p = xml.parsers.expat.ParserCreate()
@@ -316,10 +315,9 @@ def parse(xml_string):	  #uncomment when running for real
 
 	#check that content of dictionary is valid
 	try: 
-		try:
-			idd=dicti['RequestID']
-			apa = int(idd)+1
-		except:
+		print 'rqid %s' %dicti['RequestID']
+		if not dicti['RequestID'].isDigit():
+			print 'EXCEPTION HERE'
 			dicti['RequestID'] = 0
 		requestType=dicti['RequestType']
 		if requestType != 'ListCells':

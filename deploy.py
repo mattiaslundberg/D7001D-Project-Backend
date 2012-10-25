@@ -238,7 +238,7 @@ class Connector():
 		## Scale group
 		self.ag = AutoScalingGroup(group_name=WSN_ASG, load_balancers=[WSN_ELB],
 				availability_zones=['eu-west-1a'],
-				launch_config=self.lc, min_size=10, max_size=100)
+				launch_config=self.lc, min_size=25, max_size=100)
 		self.sconn.create_auto_scaling_group(self.ag)
 		
 		# Tag instances
