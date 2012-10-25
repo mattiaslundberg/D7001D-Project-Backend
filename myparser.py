@@ -447,13 +447,14 @@ def parse(xml_string):	  #uncomment when running for real
 				for lib in libList:
 					ctype=lib['cartype']
 					tstamp=lib['timestamp']
-					carList.append((ctype,tstamp))
+					data=lib['timestamp']
+					carList.append((ctype,tstamp,data))
 				carList.sort(key=lambda tup: tup[1]) #sort by timestamp
 
 				#TotalAmountOfData??
 				#don't bother at all ;)...
 				print carList
-				totalAmtData = len(''.join([str(ct[0]) for ct in carList]))
+				totalAmtData = len(''.join([str(ct[2]) for ct in carList]))
 				print totalAmtData
 				#get first and last of list
 				resultTuple = carList[0],carList[-1],len(carList),totalAmtData
