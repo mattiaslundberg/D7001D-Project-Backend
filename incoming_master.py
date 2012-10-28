@@ -91,7 +91,7 @@ class master:
 				time.sleep(max(0,TIMEOUT - (time.time() - t)))
 
 
-	def active_workers(self):
+	def tryAllInstances(self):
 		self.result = {}
 		instances = self.connector.get_instances({'tag-value':'Worker'})
 		for instance in instances:
@@ -227,7 +227,7 @@ class master:
 
 				info("I got token, i rule!")
 
-				self.active_workers()
+				self.tryAllInstances()
 				info("tests started")
 				time.sleep(self.tries*TIMEOUT)
 

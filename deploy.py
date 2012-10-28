@@ -22,14 +22,14 @@ from settings import * # Global variables
 class Connector():
 	def __init__(self):
 		self.connect()
-	
+
 	def connect(self):
 		# Init needed connections
 		self.conn = boto.ec2.connect_to_region('eu-west-1')
 		self.elbconn = boto.ec2.elb.connect_to_region('eu-west-1')
 		self.cwconn = boto.connect_cloudwatch(region=boto.ec2.cloudwatch.regions()[2])
 		self.sconn = AutoScaleConnection(region=boto.ec2.autoscale.regions()[2])
-	
+
 	def create_ami(self,instance_id,name,tags={}, num = 1):
 		_id = self.conn.create_image(instance_id, '12_LP1_AMI_D7001D_GROUP2_%s' % name)
 		time.sleep(5)
@@ -39,7 +39,7 @@ class Connector():
 		self.conn.create_tags([_id], tags)
 		time.sleep(60)
 		self.launch_instances(_id, num = num, extra_tags=tags)
-	
+
 	def launch_instances(self, ami, num=1, extra_tags = {}, instance_type = "m1.small"):
 		# Launch one or more EC2 instances from AMI
 		self.res = self.conn.run_instances(
@@ -58,7 +58,7 @@ class Connector():
 			inst.add_tag('course', 'D7001D')
 			for key, value in extra_tags.items():
 				inst.add_tag(key, value)
-	
+
 	def stop_wsn(self):
 		print 'Delete WSN'
 		## Delete all things created
@@ -67,14 +67,14 @@ class Connector():
 		for s in c53.get_all_rrsets(ADDR_ID):
 			if 'wsn' in s.name:
 				ch = rec.add_change('DELETE', WSN_ADDR,'CNAME', 60)
-				for r in s.resource_records: 
+				for r in s.resource_records:
 					ch.add_value(r)
 				rec.commit()
 		try:
 			rec.commit()
 		except Exception, e:
 			print e
-		
+
 		try:
 			self.elbconn.delete_load_balancer(WSN_ELB)
 		except Exception, e:
@@ -92,7 +92,7 @@ class Connector():
 		except Exception, e:
 			print e
 		time.sleep(10)
-	
+
 	def stop_gui(self):
 		print 'delete GUI'
 		c53=boto.route53.connection.Route53Connection()
@@ -100,7 +100,7 @@ class Connector():
 		for s in c53.get_all_rrsets(ADDR_ID):
 			if 'gui' in s.name:
 				ch = rec.add_change('DELETE', GUI_ADDR,'CNAME', 60)
-				for r in s.resource_records: 
+				for r in s.resource_records:
 					ch.add_value(r)
 				rec.commit()
 		try:
@@ -139,7 +139,7 @@ class Connector():
 		except Exception, e:
 			print e
 		time.sleep(10)
-	
+
 	def stop_db(self):
 		print 'Delete databases'
 		dbconn = boto.dynamodb.connect_to_region('eu-west-1')
@@ -159,13 +159,13 @@ class Connector():
 		except Exception, e:
 			print e
 		time.sleep(10)
-	
+
 	def start_db(self):
 		from dynamo import db as _db
 		db = _db()
 		from calculated_db import db as _db2
 		db2 = _db2()
-	
+
 	def stop_all(self):
 		self.stop_instances()
 		self.stop_wsn()
@@ -178,7 +178,7 @@ class Connector():
 			instance.stop()
 		instance.add_tag('Name', 'delete-me_%s' % user)
 		instance.add_tag('action', 'delete')
-	
+
 	def stop_instances(self, instance = None):
 		print 'Stop instances'
 		# Stop all of my running instances and mark for deletion
@@ -186,7 +186,7 @@ class Connector():
 			for i in r.instances:
 				self.stop_instance(i)
 		time.sleep(10)
-	
+
 	def get_instances(self, input_filter={}):
 		instances = []
 		for r in self.conn.get_all_instances(filters=dict({'tag-value':user}.items() + input_filter.items())):
@@ -211,13 +211,13 @@ class Connector():
 			for i in r.instances:
 				if i.state == u'running':
 					print 'Instance: %s' % i.public_dns_name
-	
+
 	def start_wsn(self):
 		# Launch a ELB with autoscaling
 		self.start_db()
 		ports = [(12345, 12345, 'tcp')]
 		self.lb = self.elbconn.create_load_balancer(WSN_ELB, ['eu-west-1a'], ports)
-		
+
 		# DEF Healthcheck
 		hc = HealthCheck(
 			interval=20,
@@ -225,22 +225,22 @@ class Connector():
 			unhealthy_threshold=5,
 			target='TCP:12345'
 		)
-		
+
 		self.lb.configure_health_check(hc)
-		
+
 		# Settings for launched instances
 		self.lc = LaunchConfiguration(name=WSN_LC, image_id=WSN_AMI,
 				key_name='12_LP1_KEY_D7001D_%s' % user,
 				instance_type='c1.medium',
 				security_groups=['12_LP1_SEC_D7001D_%s' % user])
 		self.sconn.create_launch_configuration(self.lc)
-		
+
 		## Scale group
 		self.ag = AutoScalingGroup(group_name=WSN_ASG, load_balancers=[WSN_ELB],
 				availability_zones=['eu-west-1a'],
 				launch_config=self.lc, min_size=25, max_size=100)
 		self.sconn.create_auto_scaling_group(self.ag)
-		
+
 		# Tag instances
 		ntag = Tag(key='Name', value='12_LP1_EC2_D7001D_%s' % user, resource_id=WSN_ASG,
 			propagate_at_launch=True)
@@ -251,7 +251,7 @@ class Connector():
 		ttag = Tag(key='WSN', value='WSNWorker', resource_id=WSN_ASG,
 			propagate_at_launch=True)
 		self.sconn.create_or_update_tags([ntag,ctag,utag,ttag])
-		
+
 		# How to scale
 		scale_up_policy = ScalingPolicy(
 				name=WSN_POLICY_UP, adjustment_type='ChangeInCapacity',
@@ -259,18 +259,18 @@ class Connector():
 		scale_down_policy = ScalingPolicy(
 				name=WSN_POLICY_DOWN, adjustment_type='ChangeInCapacity',
 				as_name=WSN_ASG, scaling_adjustment=-5, cooldown=30)
-		
+
 		self.sconn.create_scaling_policy(scale_up_policy)
 		self.sconn.create_scaling_policy(scale_down_policy)
-		
+
 		scale_up_policy = self.sconn.get_all_policies(
 			as_group=WSN_ASG, policy_names=[WSN_POLICY_UP])[0]
 		scale_down_policy = self.sconn.get_all_policies(
 			as_group=WSN_ASG, policy_names=[WSN_POLICY_DOWN])[0]
-		
+
 		# When to scale
 		alarm_dimensions = {"AutoScalingGroupName": WSN_ASG}
-		
+
 		scale_up_alarm = MetricAlarm(
 			name=WSN_SCALE_UP, namespace='AWS/EC2',
 			metric='CPUUtilization', statistic='Average',
@@ -280,7 +280,7 @@ class Connector():
 			dimensions=alarm_dimensions)
 		self.cwconn.create_alarm(scale_up_alarm)
 		scale_up_alarm.enable_actions()
-		
+
 		scale_down_alarm = MetricAlarm(
 			name=WSN_SCALE_DOWN, namespace='AWS/EC2',
 			metric='CPUUtilization', statistic='Average',
@@ -290,13 +290,13 @@ class Connector():
 			dimensions=alarm_dimensions)
 		self.cwconn.create_alarm(scale_down_alarm)
 		scale_down_alarm.enable_actions()
-		
+
 		c53=boto.route53.connection.Route53Connection()
 		rec = boto.route53.record.ResourceRecordSets(c53,ADDR_ID)
 		ch = rec.add_change('CREATE', WSN_ADDR,'CNAME',60)
 		ch.add_value(self.lb.dns_name)
 		rec.commit()
-	
+
 	def start_gui(self):
 		# SQS
 		self.start_db()
@@ -304,7 +304,7 @@ class Connector():
 		self.qout = awssqs(FRONTEND_OUTGOING)
 
 		self.launch_instances(ami = GUI_AMI_MASTER, num = 1, extra_tags = {'Frontend' : 'Master'}, instance_type='m1.small')
-		
+
 		# Start one worker
 		worker_ami = self.get_ami(input_filter = {'tag-value' : 'Worker'})
 		self.launch_instances(ami = worker_ami, num = 10, extra_tags = {'Frontend' : 'Worker'}, instance_type='c1.medium')
@@ -312,7 +312,7 @@ class Connector():
 		# ELB with autoscale
 		ports = [(8080, 8080, 'http')]
 		self.lb = self.elbconn.create_load_balancer(FRONTEND_ELB, ['eu-west-1a'], ports)
-		
+
 		# DEF Healthcheck
 		hc = HealthCheck(
 			interval=20,
@@ -320,22 +320,22 @@ class Connector():
 			unhealthy_threshold=5,
 			target='HTTP:8080/'
 		)
-		
+
 		self.lb.configure_health_check(hc)
-		
+
 		# Settings for launched instances
 		self.lc = LaunchConfiguration(name=FRONTEND_LC, image_id=FRONTEND_HTTP_AMI,
 				key_name='12_LP1_KEY_D7001D_%s' % user,
 				instance_type='t1.micro',
 				security_groups=['12_LP1_SEC_D7001D_%s' % user])
 		self.sconn.create_launch_configuration(self.lc)
-		
+
 		## Scale group
 		self.ag = AutoScalingGroup(group_name=FRONTEND_ASG, load_balancers=[FRONTEND_ELB],
 				availability_zones=['eu-west-1a'],
 				launch_config=self.lc, min_size=3, max_size=9)
 		self.sconn.create_auto_scaling_group(self.ag)
-		
+
 		# Tag instances
 		ntag = Tag(key='Name', value='12_LP1_EC2_D7001D_%s' % user, resource_id=FRONTEND_ASG,
 			propagate_at_launch=True)
@@ -346,7 +346,7 @@ class Connector():
 		ftag = Tag(key='FRONTEND', value="HTTP_WORKER", resource_id=FRONTEND_ASG,
 			propagate_at_launch=True)
 		self.sconn.create_or_update_tags([ntag,ctag,utag,ftag])
-		
+
 		# How to scale
 		scale_up_policy = ScalingPolicy(
 				name=FRONTEND_POLICY_UP, adjustment_type='ChangeInCapacity',
@@ -354,18 +354,18 @@ class Connector():
 		scale_down_policy = ScalingPolicy(
 				name=FRONTEND_POLICY_DOWN, adjustment_type='ChangeInCapacity',
 				as_name=FRONTEND_ASG, scaling_adjustment=-1, cooldown=30)
-		
+
 		self.sconn.create_scaling_policy(scale_up_policy)
 		self.sconn.create_scaling_policy(scale_down_policy)
-		
+
 		scale_up_policy = self.sconn.get_all_policies(
 			as_group=FRONTEND_ASG, policy_names=[FRONTEND_POLICY_UP])[0]
 		scale_down_policy = self.sconn.get_all_policies(
 			as_group=FRONTEND_ASG, policy_names=[FRONTEND_POLICY_DOWN])[0]
-		
+
 		# When to scale
 		alarm_dimensions = {"AutoScalingGroupName": FRONTEND_ASG}
-		
+
 		scale_up_alarm = MetricAlarm(
 			name=FRONTEND_SCALE_UP, namespace='AWS/EC2',
 			metric='CPUUtilization', statistic='Average',
@@ -375,7 +375,7 @@ class Connector():
 			dimensions=alarm_dimensions)
 		self.cwconn.create_alarm(scale_up_alarm)
 		scale_up_alarm.enable_actions()
-		
+
 		scale_down_alarm = MetricAlarm(
 			name=FRONTEND_SCALE_DOWN, namespace='AWS/EC2',
 			metric='CPUUtilization', statistic='Average',
@@ -385,7 +385,7 @@ class Connector():
 			dimensions=alarm_dimensions)
 		self.cwconn.create_alarm(scale_down_alarm)
 		scale_down_alarm.enable_actions()
-		
+
 		c53=boto.route53.connection.Route53Connection()
 		rec = boto.route53.record.ResourceRecordSets(c53, ADDR_ID)
 		ch = rec.add_change('CREATE', GUI_ADDR,'CNAME',60)
@@ -395,7 +395,7 @@ class Connector():
 	def get_ami(self, input_filter):
 		for ami in self.conn.get_all_images(filters=dict({'tag-value':user}.items() + input_filter.items())):
 			return ami.id
-	
+
 	def upload_code(self):
 		for r in self.conn.get_all_instances(filters={'tag-value':user}):
 			for i in r.instances:
@@ -403,7 +403,7 @@ class Connector():
 					print 'Deploying code to %s.' % i.public_dns_name
 					my_key="-i $HOME/.ssh/12_LP1_KEY_D7001D_%s.pem" % user
 					md="ssh -C -o StrictHostKeyChecking=no -Y %s ubuntu@%s" % (my_key, i.public_dns_name)
-					
+
 					print commands.getoutput('scp -o StrictHostKeyChecking=no %s * ubuntu@%s:~/' % (my_key, i.public_dns_name))
 					print commands.getoutput('%s sudo chmod +x *' % (md) )
 
