@@ -4,7 +4,7 @@ sys.path.append("..")
 from calculated_db import db as _db
 
 db = _db()
-msg = "loooooooooooooooooooooooooooooooooooooooong teeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeexxxxxxxxxxxxxxxxxxxxxxxttttttttt text"
+msg = "test text"
 myid = 2
 db.write(myid,msg)
 time.sleep(60)
