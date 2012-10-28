@@ -8,7 +8,7 @@ class awssqs:
 		self.visibility_timeout = visibility_timeout
 		self.conn = SQSConnection(region=boto.sqs.regions()[1]) # eu-west1
 		self.q = self.conn.create_queue(name)
-		
+
 		if self.q is None:
 			raise Exception("Could not get that queue " + name)
 		self.name = name
@@ -22,12 +22,12 @@ class awssqs:
 		failed = 0
 		while not success:
 			time.sleep(5)
-			success = q.write(m) # Keep trying until success
+			success = self.q.write(m) # Keep trying until success
 			failed +=1
 			if failed > 10:
-				raise Exception("Failed over 10 times to write to queue %s!" % self.name) 
+				raise Exception("Failed over 10 times to write to queue %s!" % self.name)
 
-	# Return a Message, use m.get_body() to get text
+	# Return a Message, use m.get_body() to get the text
 	def read(self):
 		if self.q is None:
 			raise Exception("Queue is none " + self.name)
